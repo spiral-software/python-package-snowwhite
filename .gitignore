@@ -1,3 +1,7 @@
+# Generated libraries and scratch directories
+.libs
+examples/*/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
