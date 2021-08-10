@@ -9,6 +9,8 @@ SmowWhite, implemented as a Python module, uses the SPIRAL code generation syste
 
 See the ```examples``` directory to learn more.
 
+*DISTRIBUTION STATEMENT A.  Approved for public release.  Distribution is unlimited.*
+
 ## Prerequisites
 
 Besides a current version of Python3 and NumPy, SnowWhite needs the following:
