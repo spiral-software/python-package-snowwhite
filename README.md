@@ -5,7 +5,7 @@ This is the prototype Python front end for the SPIRAL project's SnowWhite system
 
 SnowWhite was developed under the DARPA PAPPA (Performant Automation of Parallel Program Assembly) program.  The program focused on ways reduce the complexity of building software that takes advantage of the massive parallelism of advanced high-preformance computing systems.
 
-SmowWhite, implemented as a Python module, uses the SPIRAL code generation system to translate NumPy-based specifications to generated code, then compiles that code into a loadable library.
+SnowWhite, implemented as a Python module, uses the SPIRAL code generation system to translate NumPy-based specifications to generated code, then compiles that code into a loadable library.
 
 See the ```examples``` directory to learn more.
 
