@@ -70,7 +70,7 @@ D:\Temp>python run-hockney8.py
 
 The first time you run it, you will see output from the CMake/SPIRAL/C build, but after that it will run much faster using the generated library, which is placed in the ```snowwhite/.libs``` directory.
 
-Some of the examples require additional arguments, and some options you can change.  Read through the examples for better understanding, and examine the generated intermediate files in you scratch directory.
+Some of the examples require additional arguments, and some options you can change.  Read through the examples for better understanding, and examine the generated intermediate files in your scratch directory.
 
 
 
