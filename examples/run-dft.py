@@ -20,7 +20,7 @@ s1 = DftSolver(p1, {SW_OPT_DIRECTION : fwd})
 max_diff = 0
 max_diff_py = 0
 
-src = np.zeros(n).astype(np.complex)
+src = np.zeros(n).astype(complex)
 
 for k in range (n):
     vr = np.random.random()
@@ -46,7 +46,7 @@ for k in range (n):
     ##  print ('Python Output = ' + str(dstP))
     ##  print ('C Output = ' + str(dstC))
 
-    diffCP = dstP - dstC.astype(np.double).view(np.complex)
+    diffCP = dstP - dstC.astype(np.double).view(complex)
     ##  print ('Difference between Python & C = ' + str(diffCP) )
     diff = np.max ( np.absolute ( diffCP ) )
     if diff > max_diff:
