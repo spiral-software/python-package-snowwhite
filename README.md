@@ -13,13 +13,13 @@ See the ```examples``` directory to learn more.
 
 ## Prerequisites
 
-Besides a current version of Python3 and NumPy, SnowWhite needs the following:
+Besides a current version of **Python3** and NumPy, SnowWhite needs the following:
 
 - **SPIRAL** (available on GitHub)
 	- **spiral-software** https://www.github.com/spiral-software/spiral-software
 	- **spiral-package-fftx** https://www.github.com/spiral-software/spiral-package-fftx
 	- **spiral-package-simt** https://www.github.com/spiral-software/spiral-package-simt
-- **CMake**
+- **CMake** (3.14 or higher is required)
 - **C Compiler**
 
 With SPIRAL installed you will have CMake, a compatible C compiler, and Python3 for SnowWhite.  SPIRAL builds on Linux/Unix with **gcc** and **make**, on Windows it builds with **Visual Studio**.  For macOS SPIRAL requires version 10.14 (Mojave) or later of macOS, with a compatible version of **Xcode** and
@@ -65,7 +65,13 @@ Add the directory that contains the **snowwhite** clone to the environment varia
 Copy one of the example Python scripts from the ```examples``` directory to a scratch directory and run it like this:
 
 ```
-D:\Temp>python run-hockney8.py
+D:\Temp>python3 run-hockney8.py
+...
+...
+Install the project...
+-- Install configuration: "Release"
+-- Installing: /path/to/spiral-software/snowwhite/.libs/libhockney_8_3_5.so
+Max Diff between Python/C = 5.204170427930421e-18
 ```
 
 The first time you run it, you will see output from the CMake/SPIRAL/C build, but after that it will run much faster using the generated library, which is placed in the ```snowwhite/.libs``` directory.
