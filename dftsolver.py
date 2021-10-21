@@ -71,7 +71,7 @@ class DftSolver(SWSolver):
         """Call SPIRAL-generated function."""
         ##  print('DftSolver.solve:')
         n = self._problem.dimN()
-        dst = np.zeros((2 * n), dtype=np.double)
+        dst = np.zeros(n).astype(complex)
         self._func(dst, src)
         return dst
 

@@ -17,8 +17,6 @@ else:
 p1 = DftProblem(n, fwd)
 s1 = DftSolver(p1)
 
-max_diff = 0
-max_diff_py = 0
 
 src = np.zeros(n).astype(complex)
 
@@ -27,35 +25,9 @@ for k in range (n):
     vi = np.random.random()
     src[k] = vr + vi * 1j
         
-    ##  print ('Input = ' + str(src) )
+resP = s1.runDef(src)
+resC = s1.solve(src)
 
-    dstP = s1.runDef(src)
-    if fwd == 1:
-        ##  did a forward transform, do the reverse on the result
-        FFT = np.fft.ifft ( dstP )
-    else:
-        FFT = np.fft.fft ( dstP )
+diff = np.max ( np.absolute ( resC - resP ) )
 
-    diffCP = src - FFT
-    diff = np.max ( np.absolute ( diffCP ) )
-    if diff > max_diff_py:
-        max_diff_py = diff
-        
-    dstC = s1.solve(src)
-        
-    ##  print ('Python Output = ' + str(dstP))
-    ##  print ('C Output = ' + str(dstC))
-
-    diffCP = dstP - dstC.astype(np.double).view(complex)
-    ##  print ('Difference between Python & C = ' + str(diffCP) )
-    diff = np.max ( np.absolute ( diffCP ) )
-    if diff > max_diff:
-        max_diff = diff
-
-if fwd == 1:
-    print ('n = ' + str(n) + ': Max Diff between Python/C over all inputs: forward = ' + str(max_diff) )
-else:
-    print ('n = ' + str(n) + ': Max Diff between Python/C over all inputs: reverse = ' + str(max_diff) )
-
-print ('n = ' + str(n) + ': Max Diff between Python transform/inverse = ' + str(max_diff_py) )
-
+print ('Diff between Python/C transforms = ' + str(diff) )
