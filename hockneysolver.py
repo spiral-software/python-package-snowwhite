@@ -55,7 +55,7 @@ class HockneySolver(SWSolver):
         sym_oct = np.array([[[(1/(4*pi*((n/2-i)*(n/2-i)+(n/2-j)*(n/2-j)+(n/2-k)*(n/2-k)))) \
                 if (i<n/2 or j<n/2 or k<n/2) else 0 \
                 for i in range(nf)]for j in range(nf)] \
-                for k in range(nf)]).astype(np.complex)
+                for k in range(nf)]).astype(complex)
          
         # reflection of S: tmp1[x,y,z] = S[(Nf-1)-x, y, z]
         tmp1 = np.flip(sym_oct, axis=0) # 1st reflection
