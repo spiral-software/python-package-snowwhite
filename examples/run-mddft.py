@@ -6,8 +6,11 @@ import sys
 
 dims = [32,32,32]
 dimsTuple = tuple(dims)
-k = 1
 
+# direction, SW_FORWARD or SW_INVERSE
+k = SW_FORWARD
+
+# set SW_OPT_CUDA to True to generate CUDA code
     
 p1 = MddftProblem(dims, k)
 s1 = MddftSolver(p1, {SW_OPT_CUDA : False})

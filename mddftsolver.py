@@ -8,7 +8,7 @@ import sys
 class MddftProblem(SWProblem):
     """Define Multi-dimention DFT problem."""
 
-    def __init__(self, ns, k=1):
+    def __init__(self, ns, k=SW_FORWARD):
         """Setup problem specifics for MDDFT solver.
         
         Arguments:
@@ -33,7 +33,7 @@ class MddftSolver(SWSolver):
         ns = 'x'.join([str(n) for n in problem.dimensions()])
         c = '_'
         namebase = ''
-        if problem.direction() == 1:
+        if problem.direction() == SW_FORWARD:
             namebase = 'mddft_fwd' + c + ns
         else:
             namebase = 'mddft_inv' + c + ns
@@ -43,7 +43,7 @@ class MddftSolver(SWSolver):
     def runDef(self, src):
         """Solve using internal Python definition."""
 
-        if self._problem.direction() == 1:
+        if self._problem.direction() == SW_FORWARD:
             FFT = np.fft.fftn ( src )
         else:
             FFT = np.fft.ifftn ( src ) 
@@ -67,7 +67,7 @@ class MddftSolver(SWSolver):
         nt = tuple(self._problem.dimensions())
         dst = np.zeros(nt, complex)
         self._func(dst, src)
-        if self._problem.direction() == -1:
+        if self._problem.direction() == SW_INVERSE:
             dst = dst / np.size(dst)
         return dst
 
