@@ -15,6 +15,9 @@ SW_OPT_KEEPTEMP         = 'keeptemp'
 SW_OPT_MPI              = 'mpi'
 SW_OPT_PRINTRULETREE    = 'printruletree'
 
+SW_FORWARD  = 1
+SW_INVERSE  = -1
+
 class SWProblem:
     """Base class for SnowWhite problem."""
     
