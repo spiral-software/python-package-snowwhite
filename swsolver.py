@@ -96,11 +96,13 @@ class SWSolver:
             print("Generating CUDA code");
         else:
             print("Generating C code");
+
+        _spiralhome = os.environ.get('SPIRAL_HOME')
+        spiralexe = _spiralhome + '/' + self._spiralname
         if sys.platform == 'win32':
-            spiralexe = self._spiralname + '.bat'
+            spiralexe = spiralexe + '.bat'
             self._runResult = subprocess.run([spiralexe,'<',script], shell=True, capture_output=True)
         else:
-            spiralexe = self._spiralname
             cmd = spiralexe + ' < ' + script
             self._runResult = subprocess.run(cmd, shell=True)
 
