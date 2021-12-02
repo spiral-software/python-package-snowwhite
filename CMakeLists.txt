@@ -71,7 +71,7 @@ add_library ( ${PROJECT} SHARED ${SOURCES} )
 ##  target_compile_options     (${PROJECT}  PRIVATE )		## any flags needed?
 
 if (${HASCUDA})
-	set_property(TARGET ${PROJECT} PROPERTY CUDA_ARCHITECTURES 70)
+	set_property(TARGET ${PROJECT} PROPERTY CUDA_ARCHITECTURES "35;37;50;60;70;72;75;80")
 	set ( CMAKE_CUDA_ARCHITECTURES 70 )
 	target_compile_options     (${PROJECT} PRIVATE ${CUDA_COMPILE_FLAGS} ${GPU_COMPILE_DEFNS})
 	set_property        (TARGET ${PROJECT} PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS ON )
