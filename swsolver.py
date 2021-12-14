@@ -39,6 +39,7 @@ class SWSolver:
         self._tracingOn = False
         self._callGraph = []
         self._SharedLibAccess = None
+        self._MainFunc = None
         self._spiralname = 'spiral'
         
         # find and possibly create the subdirectory of temp dirs
@@ -60,6 +61,10 @@ class SWSolver:
             self._setupCFuncs(self._namebase)
 
         self._SharedLibAccess = ctypes.CDLL (sharedLibFullPath)
+        self._MainFunc = getattr(self._SharedLibAccess, self._namebase)
+        if self._MainFunc == None:
+            msg = 'could not find function: ' + funcname
+            raise RuntimeError(msg)
         self._initFunc()
 
     def __del__(self):
@@ -96,13 +101,11 @@ class SWSolver:
             print("Generating CUDA code");
         else:
             print("Generating C code");
-
-        _spiralhome = os.environ.get('SPIRAL_HOME')
-        spiralexe = _spiralhome + '/' + self._spiralname
         if sys.platform == 'win32':
-            spiralexe = spiralexe + '.bat'
+            spiralexe = self._spiralname + '.bat'
             self._runResult = subprocess.run([spiralexe,'<',script], shell=True, capture_output=True)
         else:
+            spiralexe = self._spiralname
             cmd = spiralexe + ' < ' + script
             self._runResult = subprocess.run(cmd, shell=True)
 
@@ -182,8 +185,12 @@ class SWSolver:
             msg = 'could not find function: ' + funcname
             raise RuntimeError(msg)
 
-    def _func(self, dest, source, symbol):
-        raise NotImplementedError()
+    def _func(self, dst, src):
+        """Call the SPIRAL generated main function"""
+ 
+        return self._MainFunc( 
+                    dst.ctypes.data_as(ctypes.c_void_p),
+                    src.ctypes.data_as(ctypes.c_void_p) )
         
     def _destroyFunc(self):
         """Call the SPIRAL generated destroy function"""

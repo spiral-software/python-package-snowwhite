@@ -105,19 +105,14 @@ class HockneySolver(SWSolver):
     def scale(self, d):
         N = self._problem.dimN()
         return (d / N**3)
-        
-    def _func(self, dest, source, symbol):
+ 
+    def _func(self, dst, src, sym):
         """Call the SPIRAL generated main function"""
-        funcname = self._namebase
-        gf = getattr(self._SharedLibAccess, funcname, None)
-        if gf != None:
-            return gf( dest.ctypes.data_as(ctypes.c_void_p),
-                   source.ctypes.data_as(ctypes.c_void_p),
-                   symbol.ctypes.data_as(ctypes.c_void_p) )
-        else:
-            msg = 'could not find function: ' + funcname
-            raise RuntimeError(msg)
-        
+        return self._MainFunc( 
+                    dst.ctypes.data_as(ctypes.c_void_p),
+                    src.ctypes.data_as(ctypes.c_void_p),
+                    sym.ctypes.data_as(ctypes.c_void_p) )
+
 
     def _writeScript(self, script_file):
         n = self._problem.dimN()

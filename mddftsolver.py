@@ -53,14 +53,6 @@ class MddftSolver(SWSolver):
     def _trace(self):
         pass
 
-    def _func(self, dest, source):
-        """Call the SPIRAL generated main function -- {_namebase}."""
-        funcname = self._namebase
-        gf = getattr(self._SharedLibAccess, funcname)
-
-        return gf( dest.ctypes.data_as(ctypes.c_void_p),
-                   source.ctypes.data_as(ctypes.c_void_p) )
-
     def solve(self, src):
         """Call SPIRAL-generated function."""
 

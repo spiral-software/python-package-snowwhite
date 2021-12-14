@@ -64,17 +64,6 @@ class BatchMddftSolver(SWSolver):
         
     def _trace(self):
         pass
-
-    def _func(self, dst, src):
-        """Call the SPIRAL generated main function -- {_namebase}."""
-        funcname = self._namebase
-        gf = getattr(self._SharedLibAccess, funcname, None)
-        if gf != None:
-            return gf( dst.ctypes.data_as(ctypes.c_void_p),
-                       src.ctypes.data_as(ctypes.c_void_p) )
-        else:
-            msg = 'could not find function: ' + funcname
-            raise RuntimeError(msg)
     
     def solve(self, src):
         """Call SPIRAL-generated function."""
