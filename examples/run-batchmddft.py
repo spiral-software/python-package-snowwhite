@@ -1,7 +1,8 @@
 #! python
 
+from snowwhite import *
 from snowwhite.batchmddftsolver import *
-import numpy as np
+import numpy as np  
 import sys
 
 n = 4
@@ -14,7 +15,10 @@ if len(sys.argv) > 2:
     
 p1 = BatchMddftProblem(n, b)
 
-s1 = BatchMddftSolver(p1, {SW_OPT_CUDA : True, 
+# True or False for CUDA
+genCuda = True
+
+s1 = BatchMddftSolver(p1, {SW_OPT_CUDA : genCuda, 
     SW_OPT_KEEPTEMP : False, SW_OPT_PRINTRULETREE : True})
 
 input_data_Py, input_data_C = s1.buildTestInput()
@@ -30,6 +34,8 @@ output_C = s1.solve(input_data_C)
 print('length Py output: ', len(output_Py.flatten()), '| datatype: ', output_Py.dtype)
 print('length C output: ', len(output_C), '| datatype: ', output_C.dtype, '\n')
 
-print('calling np.max')
-diff = np.max ( np.absolute (  output_Py_IL - output_C))
+
+xp = get_array_module(output_Py)
+
+diff = xp.max ( xp.absolute (  output_Py_IL - output_C))
 print ( 'Max Diff between Python/C = ' + str(diff) )
