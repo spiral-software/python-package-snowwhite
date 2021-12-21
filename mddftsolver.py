@@ -1,6 +1,12 @@
 
 from snowwhite import *
 import numpy as np
+
+try:
+    import cupy as cp
+except ModuleNotFoundError:
+    cp = None
+
 import ctypes
 import sys
 
@@ -42,11 +48,13 @@ class MddftSolver(SWSolver):
 
     def runDef(self, src):
         """Solve using internal Python definition."""
+        
+        xp = get_array_module(src)
 
         if self._problem.direction() == SW_FORWARD:
-            FFT = np.fft.fftn ( src )
+            FFT = xp.fft.fftn ( src )
         else:
-            FFT = np.fft.ifftn ( src ) 
+            FFT = xp.fft.ifftn ( src ) 
 
         return FFT
         
@@ -55,12 +63,14 @@ class MddftSolver(SWSolver):
 
     def solve(self, src):
         """Call SPIRAL-generated function."""
+        
+        xp = cp.get_array_module(src)
 
         nt = tuple(self._problem.dimensions())
-        dst = np.zeros(nt, complex)
+        dst = xp.zeros(nt, complex)
         self._func(dst, src)
         if self._problem.direction() == SW_INVERSE:
-            dst = dst / np.size(dst)
+            dst = dst / xp.size(dst)
         return dst
 
     def _writeScript(self, script_file):
@@ -117,25 +127,18 @@ class MddftSolver(SWSolver):
         
         print('extern void ' + self._namebase + '_cu' + '(double  *Y, double  *X);', file=cu_hostFile)
         print('extern void destroy_' + self._namebase + '_cu();\n', file=cu_hostFile)
-        print('double  *dev_in, *dev_out; \n', file=cu_hostFile)
         print('extern "C" { \n', file=cu_hostFile)
         print('void init_' + self._namebase + '()' + '{', file=cu_hostFile)
         
-        print('    cudaMalloc( &dev_in,  sizeof(double) * ' + inSzStr + ');', file=cu_hostFile)
-        print('    cudaMalloc( &dev_out, sizeof(double) * ' + outSzStr +'); \n', file=cu_hostFile)
         print('    init_' + self._namebase + '_cu();', file=cu_hostFile)
         print('} \n', file=cu_hostFile)
         
         print('void ' + self._namebase + '(double  *Y, double  *X) {', file=cu_hostFile)
-        print('    cudaMemcpy ( dev_in, X, sizeof(double) * ' + inSzStr + ', cudaMemcpyHostToDevice);', file=cu_hostFile)
-        print('    ' + self._namebase + '_cu(dev_out, dev_in);', file=cu_hostFile)
+        print('    ' + self._namebase + '_cu(Y, X);', file=cu_hostFile)
         print('    checkCudaErrors(cudaGetLastError());', file=cu_hostFile)
-        print('    cudaMemcpy ( Y, dev_out, sizeof(double) * ' + outSzStr + ', cudaMemcpyDeviceToHost);', file=cu_hostFile)
         print('} \n', file=cu_hostFile)
         
         print('void destroy_' + self._namebase + '() {', file=cu_hostFile)
-        print('    cudaFree(dev_out);', file=cu_hostFile)
-        print('    cudaFree(dev_in); \n', file=cu_hostFile)
         print('    destroy_' + self._namebase + '_cu();', file=cu_hostFile)
         print('} \n', file=cu_hostFile)
         print('}', file=cu_hostFile)

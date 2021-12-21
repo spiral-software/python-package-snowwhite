@@ -1,6 +1,10 @@
 
 from snowwhite import *
 import numpy as np
+try:
+    import cupy as cp
+except ModuleNotFoundError:
+    cp = None
 import ctypes
 import sys
 import random
@@ -43,10 +47,12 @@ class BatchMddftSolver(SWSolver):
         n = self._problem.dimN()
         b = self._problem.szBatch()
         
-        out = np.empty(shape=(b, n, n, n)).astype(complex)
+        xp = get_array_module(src)
+        
+        out = xp.empty(shape=(b, n, n, n)).astype(complex)
         
         for i in range(b):
-            dft = np.fft.fftn(src[i,:,:,:]) 
+            dft = xp.fft.fftn(src[i,:,:,:]) 
             out[i,:,:,:] = dft 
         
         return out
@@ -55,8 +61,10 @@ class BatchMddftSolver(SWSolver):
     def buildTestInput(self):
         n = self._problem.dimN()
         b = self._problem.szBatch()
+        
+        xp = cp if self._genCuda else np
                
-        ret_Py = np.random.rand(b, n, n, n).astype(complex)
+        ret_Py = xp.random.rand(b, n, n, n).astype(complex)
         ret_C = ret_Py.view(dtype=np.double)
         
         return ret_Py, ret_C
@@ -67,10 +75,12 @@ class BatchMddftSolver(SWSolver):
     
     def solve(self, src):
         """Call SPIRAL-generated function."""
+        
+        xp = get_array_module(src)
 
         n = self._problem.dimN()
         b = self._problem.szBatch()
-        dst = np.zeros((b*n**3 * 2), dtype=np.double)
+        dst = xp.zeros((b*n**3 * 2), dtype=np.double)
         self._func(dst, src)
         return dst
 
@@ -141,25 +151,18 @@ class BatchMddftSolver(SWSolver):
         
         print('extern void ' + self._namebase + '_cu' + '(double  *Y, double  *X);', file=cu_hostFile)
         print('extern void destroy_' + self._namebase + '_cu();\n', file=cu_hostFile)
-        print('double  *dev_in, *dev_out; \n', file=cu_hostFile)
+
         print('extern "C" { \n', file=cu_hostFile)
         print('void init_' + self._namebase + '()' + '{', file=cu_hostFile)
-        
-        print('    cudaMalloc( &dev_in,  sizeof(double) * ' + inSzStr + ');', file=cu_hostFile)
-        print('    cudaMalloc( &dev_out, sizeof(double) * ' + outSzStr +'); \n', file=cu_hostFile)
         print('    init_' + self._namebase + '_cu();', file=cu_hostFile)
         print('} \n', file=cu_hostFile)
         
         print('void ' + self._namebase + '(double  *Y, double  *X) {', file=cu_hostFile)
-        print('    cudaMemcpy ( dev_in, X, sizeof(double) * ' + inSzStr + ', cudaMemcpyHostToDevice);', file=cu_hostFile)
-        print('    ' + self._namebase + '_cu(dev_out, dev_in);', file=cu_hostFile)
+        print('    ' + self._namebase + '_cu(Y, X);', file=cu_hostFile)
         print('    checkCudaErrors(cudaGetLastError());', file=cu_hostFile)
-        print('    cudaMemcpy ( Y, dev_out, sizeof(double) * ' + outSzStr + ', cudaMemcpyDeviceToHost);', file=cu_hostFile)
         print('} \n', file=cu_hostFile)
         
         print('void destroy_' + self._namebase + '() {', file=cu_hostFile)
-        print('    cudaFree(dev_out);', file=cu_hostFile)
-        print('    cudaFree(dev_in); \n', file=cu_hostFile)
         print('    destroy_' + self._namebase + '_cu();', file=cu_hostFile)
         print('} \n', file=cu_hostFile)
         print('}', file=cu_hostFile)
