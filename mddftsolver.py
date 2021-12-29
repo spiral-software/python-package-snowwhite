@@ -36,13 +36,16 @@ class MddftSolver(SWSolver):
         if not isinstance(problem, MddftProblem):
             raise TypeError("problem must be an MddftProblem")
         
+        typ = 'z'
+        if opts.get(SW_OPT_REALCTYPE, 0) == 'float':
+            typ = 'c'
         ns = 'x'.join([str(n) for n in problem.dimensions()])
         c = '_'
         namebase = ''
         if problem.direction() == SW_FORWARD:
-            namebase = 'mddft_fwd' + c + ns
+            namebase = typ + 'mddft_fwd' + c + ns
         else:
-            namebase = 'mddft_inv' + c + ns
+            namebase = typ + 'mddft_inv' + c + ns
             
         super(MddftSolver, self).__init__(problem, namebase, opts)
 
@@ -67,7 +70,7 @@ class MddftSolver(SWSolver):
         xp = cp.get_array_module(src)
 
         nt = tuple(self._problem.dimensions())
-        dst = xp.zeros(nt, complex)
+        dst = xp.zeros(nt, src.dtype)
         self._func(dst, src)
         if self._problem.direction() == SW_INVERSE:
             dst = dst / xp.size(dst)
@@ -95,6 +98,8 @@ class MddftSolver(SWSolver):
         print(");", file = script_file)        
 
         print("opts := conf.getOpts(t);", file = script_file)
+        if self._opts.get(SW_OPT_REALCTYPE) == "float":
+            print('opts.TRealCtype := "float";', file = script_file)
         print("tt := opts.tagIt(t);", file = script_file)
         print("", file = script_file)
         print("c := opts.fftxGen(tt);", file = script_file)
@@ -106,8 +111,11 @@ class MddftSolver(SWSolver):
         
         # Python interface to C libraries does not handle mangled names from CUDA/C++ compiler
         
+        typ = 'double'
+        if self._opts.get(SW_OPT_REALCTYPE, 0) == 'float':
+            typ = 'float'
+        
         dims = tuple(self._problem.dimensions())
-
         
         inSzStr  = str(2 * np.prod(dims))
         outSzStr = str(2 * np.prod(dims))
@@ -125,7 +133,7 @@ class MddftSolver(SWSolver):
         
         print('extern void init_' + self._namebase + '_cu();', file=cu_hostFile)
         
-        print('extern void ' + self._namebase + '_cu' + '(double  *Y, double  *X);', file=cu_hostFile)
+        print('extern void ' + self._namebase + '_cu' + '(' + typ + '  *Y, ' + typ + '  *X);', file=cu_hostFile)
         print('extern void destroy_' + self._namebase + '_cu();\n', file=cu_hostFile)
         print('extern "C" { \n', file=cu_hostFile)
         print('void init_' + self._namebase + '()' + '{', file=cu_hostFile)
@@ -133,7 +141,7 @@ class MddftSolver(SWSolver):
         print('    init_' + self._namebase + '_cu();', file=cu_hostFile)
         print('} \n', file=cu_hostFile)
         
-        print('void ' + self._namebase + '(double  *Y, double  *X) {', file=cu_hostFile)
+        print('void ' + self._namebase + '(' + typ + '  *Y, ' + typ + '  *X) {', file=cu_hostFile)
         print('    ' + self._namebase + '_cu(Y, X);', file=cu_hostFile)
         print('    checkCudaErrors(cudaGetLastError());', file=cu_hostFile)
         print('} \n', file=cu_hostFile)
