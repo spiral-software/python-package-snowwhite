@@ -37,7 +37,10 @@ class BatchMddftSolver(SWSolver):
  
         n = str(problem.dimN())
         b = str(problem.szBatch())
-        namebase = "batch3ddft" + n + 'x' + b
+        typ = 'z'
+        if opts.get(SW_OPT_REALCTYPE, 0) == 'float':
+            typ = 'c'
+        namebase = typ + 'batch3ddft' + n + 'x' + b
         
         super(BatchMddftSolver, self).__init__(problem, namebase, opts)
 

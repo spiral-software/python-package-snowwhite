@@ -23,6 +23,7 @@ SW_OPT_CUDA             = 'cuda'
 SW_OPT_KEEPTEMP         = 'keeptemp'
 SW_OPT_MPI              = 'mpi'
 SW_OPT_PRINTRULETREE    = 'printruletree'
+SW_OPT_REALCTYPE        = 'realctype'
 
 SW_FORWARD  = 1
 SW_INVERSE  = -1
