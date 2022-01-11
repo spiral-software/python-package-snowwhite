@@ -19,6 +19,7 @@ except ModuleNotFoundError:
 import ctypes
 import sys
 
+SW_OPT_COLMAJOR         = 'colmajor'
 SW_OPT_CUDA             = 'cuda'
 SW_OPT_KEEPTEMP         = 'keeptemp'
 SW_OPT_MPI              = 'mpi'
@@ -41,6 +42,7 @@ class SWSolver:
     def __init__(self, problem: SWProblem, namebase = 'func', opts = {}):
         self._problem = problem
         self._opts = opts
+        self._colMajor = self._opts.get(SW_OPT_COLMAJOR, False)
         self._genCuda = self._opts.get(SW_OPT_CUDA, False)
         self._keeptemp = self._opts.get(SW_OPT_KEEPTEMP, False)
         self._withMPI = self._opts.get(SW_OPT_MPI, False)

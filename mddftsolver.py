@@ -18,7 +18,7 @@ class MddftProblem(SWProblem):
         """Setup problem specifics for MDDFT solver.
         
         Arguments:
-        n      -- dimensions of MDDFT
+        ns     -- dimensions of MDDFT
         """
         super(MddftProblem, self).__init__()
         self._ns = ns
@@ -40,13 +40,15 @@ class MddftSolver(SWSolver):
         if opts.get(SW_OPT_REALCTYPE, 0) == 'float':
             typ = 'c'
         ns = 'x'.join([str(n) for n in problem.dimensions()])
-        c = '_'
         namebase = ''
         if problem.direction() == SW_FORWARD:
-            namebase = typ + 'mddft_fwd' + c + ns
+            namebase = typ + 'mddft_fwd_' + ns
         else:
-            namebase = typ + 'mddft_inv' + c + ns
-            
+            namebase = typ + 'mddft_inv_' + ns
+        
+        if opts.get(SW_OPT_COLMAJOR, False):
+            namebase = namebase + '_F'
+                    
         super(MddftSolver, self).__init__(problem, namebase, opts)
 
     def runDef(self, src):
@@ -70,10 +72,11 @@ class MddftSolver(SWSolver):
         xp = cp.get_array_module(src)
 
         nt = tuple(self._problem.dimensions())
-        dst = xp.zeros(nt, src.dtype)
+        ordc = 'F' if self._colMajor else 'C'
+        dst = xp.zeros(nt, src.dtype,  order=ordc)
         self._func(dst, src)
         if self._problem.direction() == SW_INVERSE:
-            dst = dst / xp.size(dst)
+            xp.divide(dst, xp.size(dst), out=dst)
         return dst
 
     def _writeScript(self, script_file):
@@ -94,7 +97,10 @@ class MddftSolver(SWSolver):
         print("t := let(ns := " + dims + ",", file = script_file) 
         print('    name := "' + nameroot + '",', file = script_file)
         # -1 is inverse for Numpy and forward (1) for Spiral
-        print("    TFCall(TRC(MDDFT(ns, " + str(self._problem.direction() * -1) + ")), rec(fname := name, params := []))", file = script_file)
+        if self._colMajor:
+            print("    TFCall(TRC(TColMajor(MDDFT(ns, " + str(self._problem.direction() * -1) + "))), rec(fname := name, params := []))", file = script_file)
+        else:
+            print("    TFCall(TRC(MDDFT(ns, " + str(self._problem.direction() * -1) + ")), rec(fname := name, params := []))", file = script_file)
         print(");", file = script_file)        
 
         print("opts := conf.getOpts(t);", file = script_file)
