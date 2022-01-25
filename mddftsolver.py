@@ -69,7 +69,7 @@ class MddftSolver(SWSolver):
     def solve(self, src):
         """Call SPIRAL-generated function."""
         
-        xp = cp.get_array_module(src)
+        xp = get_array_module(src)
 
         nt = tuple(self._problem.dimensions())
         ordc = 'F' if self._colMajor else 'C'
