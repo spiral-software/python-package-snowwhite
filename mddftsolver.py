@@ -117,12 +117,7 @@ class MddftSolver(SWSolver):
         typ = 'double'
         if self._opts.get(SW_OPT_REALCTYPE, 0) == 'float':
             typ = 'float'
-        
-        dims = tuple(self._problem.dimensions())
-        
-        inSzStr  = str(2 * np.prod(dims))
-        outSzStr = str(2 * np.prod(dims))
-        
+                
         cu_hostFileName = self._namebase + '_host.cu'
         cu_hostFile = open(cu_hostFileName, 'w')
         
