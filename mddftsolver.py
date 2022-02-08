@@ -7,9 +7,6 @@ try:
 except ModuleNotFoundError:
     cp = None
 
-import ctypes
-import sys
-
 
 class MddftProblem(SWProblem):
     """Define Multi-dimention DFT problem."""
