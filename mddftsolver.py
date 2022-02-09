@@ -127,8 +127,6 @@ class MddftSolver(SWSolver):
         print(' */', file=cu_hostFile)
         print('', file=cu_hostFile)
         
-        print('#include <helper_cuda.h> \n', file=cu_hostFile)
-        
         print('extern void init_' + self._namebase + '_cu();', file=cu_hostFile)
         
         print('extern void ' + self._namebase + '_cu' + '(' + typ + '  *Y, ' + typ + '  *X);', file=cu_hostFile)
@@ -141,7 +139,6 @@ class MddftSolver(SWSolver):
         
         print('void ' + self._namebase + '(' + typ + '  *Y, ' + typ + '  *X) {', file=cu_hostFile)
         print('    ' + self._namebase + '_cu(Y, X);', file=cu_hostFile)
-        print('    checkCudaErrors(cudaGetLastError());', file=cu_hostFile)
         print('} \n', file=cu_hostFile)
         
         print('void destroy_' + self._namebase + '() {', file=cu_hostFile)

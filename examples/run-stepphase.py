@@ -22,7 +22,7 @@ s1 = StepPhaseSolver(p1, opts)
 src = np.ones(dimsTuple, dtype=complex)
 amplitudes = np.ones(dimsTuple, dtype=np.float64)
 for  k in range (np.size(src)):
-    src.itemset(k,np.random.random() + j*np.random.random())
+    src.itemset(k,np.random.random() + 1j*np.random.random())
     amplitudes.itemset(k,np.random.random())
 
 xp = np
