@@ -1,5 +1,6 @@
 #! python
 
+import sys
 from snowwhite.stepphasesolver import *
 import numpy as np
 try:
@@ -8,6 +9,9 @@ except ModuleNotFoundError:
     cp = None
 
 N = 81
+if len(sys.argv) > 1:
+    N = int ( sys.argv[1] )
+
 dims = [N,N,N]
 dimsTuple = tuple(dims)
 
