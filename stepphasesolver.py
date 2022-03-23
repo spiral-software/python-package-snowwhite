@@ -119,7 +119,7 @@ class StepPhaseSolver(SWSolver):
         print('name := "' + nameroot + '";', file = script_file)
         print('domain := MDPRDFT(szcube, -1).dims()[1];', file = script_file)
         print('', file = script_file)
-        print('t := TFCall(IMDPRDFT(szcube, 1) * ExaFEL_Pointwise(domain, symvar) * MDPRDFT(szcube, -1),', file = script_file)
+        print('t := TFCall(IMDPRDFT(szcube, 1) * StepPhase_Pointwise(domain, symvar) * MDPRDFT(szcube, -1),', file = script_file)
         print('    rec(fname := name, params := [symvar]));', file = script_file)
         print('', file = script_file)
         print('opts := conf.getOpts(t);', file = script_file)
