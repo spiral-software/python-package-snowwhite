@@ -42,16 +42,16 @@ class StepPhaseSolver(SWSolver):
         xp = get_array_module(rho)
         
         n = self._problem.dimN()
-        amp_mask = xp.ones((n, n, n), dtype=xp.bool_)
+        amp_mask = xp.ones(amplitudes.shape, dtype=xp.bool_)
         amp_mask[0, 0, 0] = 0
 
-        rho_hat = xp.fft.fftn(rho)
+        rho_hat = xp.fft.rfftn(rho)
         phases = xp.angle(rho_hat)
         rho_hat_mod = xp.where(
             amp_mask,
             amplitudes * xp.exp(1j*phases),
             rho_hat)
-        rho_mod = xp.fft.ifftn(rho_hat_mod).real
+        rho_mod = xp.fft.irfftn(rho_hat_mod, rho.shape)
         
         return rho_mod
         
@@ -67,6 +67,7 @@ class StepPhaseSolver(SWSolver):
         ordc = 'F' if self._colMajor else 'C'
         dst = xp.zeros((n, n, n), src.dtype,  order=ordc)
         self._func(dst, src, amplitudes)
+        xp.divide(dst, xp.size(dst), out=dst)
         return dst
                     
     def _func(self, dst, src, amplitudes):
@@ -122,6 +123,7 @@ class StepPhaseSolver(SWSolver):
         print('    rec(fname := name, params := [symvar]));', file = script_file)
         print('', file = script_file)
         print('opts := conf.getOpts(t);', file = script_file)
+        print('Add(opts.includes, "<float.h>");',  file = script_file)
         print('tt := opts.tagIt(t);', file = script_file)
         print('', file = script_file)
         print('c := opts.fftxGen(tt);', file = script_file)
