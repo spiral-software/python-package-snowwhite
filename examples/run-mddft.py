@@ -2,14 +2,18 @@
 
 from snowwhite.mddftsolver import *
 import numpy as np
-import cupy as cp
+try:
+    import cupy as cp
+except ModuleNotFoundError:
+    cp = None
 import sys
 
 dims = [32,32,32]
 dimsTuple = tuple(dims)
 
-# True of False for CUDA
+# True of False for CUDA, CUDA requires CuPy
 genCuda = True
+genCuda = genCuda and (cp != None)
 opts = {SW_OPT_CUDA : genCuda}
 
 # direction, SW_FORWARD or SW_INVERSE
@@ -24,13 +28,13 @@ for  k in range (np.size(src)):
     vi = np.random.random()
     src.itemset(k,vr + vi * 1j)
 
+xp = np
 if genCuda:    
     src = cp.asarray(src)
+    xp = cp
 
 dstP = s1.runDef(src)
 dstC = s1.solve(src)
-
-xp = cp.get_array_module(src)
 
 diff = xp.max ( xp.absolute ( dstC - dstP ) )
 
