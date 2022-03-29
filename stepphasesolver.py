@@ -28,7 +28,7 @@ class StepPhaseProblem(SWProblem):
         
 
 class StepPhaseSolver(SWSolver):
-    def __init__(self, problem: StepPhaseProblem, opts = {}):
+    def __init__(self, problem: StepPhaseProblem, opts = {SW_OPT_CUDA : True}):
         if not isinstance(problem, StepPhaseProblem):
             raise TypeError("problem must be an StepPhaseProblem")
         
