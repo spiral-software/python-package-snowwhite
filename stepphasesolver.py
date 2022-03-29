@@ -32,7 +32,14 @@ class StepPhaseSolver(SWSolver):
         if not isinstance(problem, StepPhaseProblem):
             raise TypeError("problem must be an StepPhaseProblem")
         
-        namebase = 'StepPhase_' + str(problem.dimN())
+        if opts.get(SW_OPT_REALCTYPE, 0) == 'float':
+            typ = 'c'
+            self._ctype  = 'float'
+        else:
+            typ = 'z'
+            self._ctype = 'double'
+             
+        namebase = typ + 'stepphase_' + str(problem.dimN())
                             
         super(StepPhaseSolver, self).__init__(problem, namebase, opts)
 
@@ -131,6 +138,8 @@ class StepPhaseSolver(SWSolver):
         print('    rec(fname := name, params := [symvar]));', file = script_file)
         print('', file = script_file)
         print('opts := conf.getOpts(t);', file = script_file)
+        if self._opts.get(SW_OPT_REALCTYPE) == "float":
+            print('opts.TRealCtype := "float";', file = script_file)
         print('Add(opts.includes, "<float.h>");',  file = script_file)
         print('tt := opts.tagIt(t);', file = script_file)
         print('', file = script_file)
@@ -143,7 +152,7 @@ class StepPhaseSolver(SWSolver):
         
         # Python interface to C libraries does not handle mangled names from CUDA/C++ compiler
         
-        typ = 'double'
+        typ = self._ctype
         
         szStr  = str(self._problem.dimN() ** 3)
         

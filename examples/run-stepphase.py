@@ -12,13 +12,20 @@ N = 81
 if len(sys.argv) > 1:
     N = int ( sys.argv[1] )
 
+c_type = 'double'
+src_type = np.double
+if len(sys.argv) > 2:
+    if sys.argv[2] == "f":
+        c_type = 'float'
+        src_type = np.single
+
 dims = [N,N,N]
 dimsTuple = tuple(dims)
 
 # True of False for CUDA, CUDA requires CuPy
 genCuda = True
 genCuda = genCuda and (cp != None)
-opts = {SW_OPT_CUDA : genCuda}
+opts = {SW_OPT_CUDA : genCuda, SW_OPT_REALCTYPE : c_type}
 
 xp = np
 if genCuda:
@@ -28,7 +35,7 @@ if genCuda:
 p1 = StepPhaseProblem(N)
 s1 = StepPhaseSolver(p1, opts)
 
-src = np.ones(dimsTuple, dtype=np.double)
+src = np.ones(dimsTuple, dtype=src_type)
 for  k in range (np.size(src)):
     src.itemset(k,np.random.random()*10.0)
 
