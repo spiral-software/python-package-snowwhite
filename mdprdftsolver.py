@@ -50,8 +50,12 @@ class MdprdftSolver(SWSolver):
             raise TypeError("problem must be an MddftProblem")
         
         typ = 'z'
+        self._ftype = np.double
+        self._cxtype = np.cdouble
         if opts.get(SW_OPT_REALCTYPE, 0) == 'float':
             typ = 'c'
+            self._ftype = np.single
+            self._cxtype = np.csingle
         ns = 'x'.join([str(n) for n in problem.dimensions()])
         namebase = ''
         if problem.direction() == SW_FORWARD:
@@ -85,10 +89,10 @@ class MdprdftSolver(SWSolver):
         xp = get_array_module(src)
         if self._problem.direction() == SW_FORWARD:
             nt = tuple(self._problem.dimensionsCX())
-            rtype = complex
+            rtype = self._cxtype
         else:
             nt = tuple(self._problem.dimensions())
-            rtype = np.double
+            rtype = self._ftype
         ordc = 'F' if self._colMajor else 'C'
         dst = xp.zeros(nt, rtype,  order=ordc)
         self._func(dst, src)
