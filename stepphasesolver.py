@@ -62,12 +62,20 @@ class StepPhaseSolver(SWSolver):
         """Call SPIRAL-generated function."""
         
         xp = get_array_module(src)
+        
+        #slice amplitudes is it's a cube
+        shape = amplitudes.shape
+        if shape[0] == shape[2]:
+            N = shape[0]
+            Nx = (N // 2) + 1
+            _amps = cp.ascontiguousarray(amplitudes[:, :, :Nx])
+        else:
+            _amps = amplitudes
 
         n = self._problem.dimN()
-        ordc = 'F' if self._colMajor else 'C'
-        dst = xp.zeros((n, n, n), src.dtype,  order=ordc)
-        self._func(dst, src, amplitudes)
-        xp.divide(dst, xp.size(dst), out=dst)
+        dst = cp.zeros((n, n, n), src.dtype)
+        self._func(dst, src, _amps)
+        cp.divide(dst, cp.size(dst), out=dst)
         return dst
                     
     def _func(self, dst, src, amplitudes):
