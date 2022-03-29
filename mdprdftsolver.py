@@ -1,3 +1,7 @@
+"""
+MDPRDFT Module
+"""
+
 
 from snowwhite import *
 import numpy as np
@@ -9,14 +13,17 @@ except ModuleNotFoundError:
 
 
 class MdprdftProblem(SWProblem):
-    """Define Multi-dimention DFT problem."""
-
+    """
+    Multi-dimention Packed Real DFT (MDPRDFT) problem.
+            
+    Constructor: MdprdftProblem(ns, k=SW_FORWARD)
+        ns -- shape (tuple) of MDPRDFT box of reals (input for forward, output for inverse)
+        k  -- direction, SW_FORWARD or SW_INVERSE
+    """
+ 
     def __init__(self, ns, k=SW_FORWARD):
-        """Setup problem specifics for MDDFT solver.
+        """Setup problem specifics for MDPRDFT solver."""
         
-        Arguments:
-        ns     -- dimensions of MDDFT
-        """
         super(MdprdftProblem, self).__init__()
         self._ns = ns
         self._k = k
