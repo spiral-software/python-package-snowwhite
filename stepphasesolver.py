@@ -12,7 +12,7 @@ import sys
 
 
 class StepPhaseProblem(SWProblem):
-    """Define Multi-dimention DFT problem."""
+    """Define dimensions of StepPhase problem."""
 
     def __init__(self, n):
         """Setup problem specifics for StepPhase solver.
