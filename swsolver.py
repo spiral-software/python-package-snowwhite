@@ -166,15 +166,10 @@ class SWSolver:
         if self._runResult.returncode == 0 and not self._keeptemp:
             shutil.rmtree(tempdir, ignore_errors=True)
             
-    def _writeCudaHost(self):
-        pass
-            
     def _setupCFuncs(self, basename):
         script = basename + ".g"
         self._genScript(script)
         self._callSpiral(script)
-        if self._genCuda:
-            self._writeCudaHost()
         self._callCMake(basename)
         
     def _trace(self):

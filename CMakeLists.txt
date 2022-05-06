@@ -26,7 +26,7 @@ if (${HASCUDA})
 	if (${HASMPI})
 		set ( SOURCES ${FILEROOT}.cu mpimain.cu)
 	else ()
-		set ( SOURCES ${FILEROOT}.cu ${FILEROOT}_host.cu )
+		set ( SOURCES ${FILEROOT}.cu )
 	endif ()
 else ()
 	project (SPIRAL_CPU
