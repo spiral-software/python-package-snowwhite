@@ -22,13 +22,20 @@ if len(sys.argv) > 2:
 dims = [N,N,N]
 dimsTuple = tuple(dims)
 
-# True of False for CUDA, CUDA requires CuPy
+# True or False for CUDA, CUDA requires CuPy
+# True or False for HIP, HIP (to rocm/4.3.0) is supported by CuPy
 genCuda = True
 genCuda = genCuda and (cp != None)
-opts = {SW_OPT_CUDA : genCuda, SW_OPT_REALCTYPE : c_type}
+if genCuda:
+    opts = {SW_OPT_CUDA : genCuda, SW_OPT_REALCTYPE : c_type}
+
+genHIP = False
+genHIP = genHIP and (cp != None)
+if genHIP:
+    opts = {SW_OPT_HIP : genHIP, SW_OPT_REALCTYPE : c_type}
 
 xp = np
-if genCuda:
+if genCuda or genHIP:
     xp = cp
 
 
@@ -39,7 +46,7 @@ src = np.ones(dimsTuple, dtype=src_type)
 for  k in range (np.size(src)):
     src.itemset(k,np.random.random()*10.0)
 
-if genCuda:
+if genCuda or genHIP:
     src = cp.asarray(src) 
 
 amplitudes = xp.absolute(xp.fft.rfftn(src))

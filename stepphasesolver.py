@@ -28,7 +28,7 @@ class StepPhaseProblem(SWProblem):
         
 
 class StepPhaseSolver(SWSolver):
-    def __init__(self, problem: StepPhaseProblem, opts = {SW_OPT_CUDA : True}):
+    def __init__(self, problem: StepPhaseProblem, opts = {SW_OPT_CUDA : False, SW_OPT_HIP : False}):
         if not isinstance(problem, StepPhaseProblem):
             raise TypeError("problem must be an StepPhaseProblem")
         
@@ -40,7 +40,7 @@ class StepPhaseSolver(SWSolver):
             self._ctype = 'double'
              
         namebase = typ + 'stepphase_' + str(problem.dimN())
-                            
+        print ( 'StepPhaseSolver: namebase = ' + namebase, flush = True )
         super(StepPhaseSolver, self).__init__(problem, namebase, opts)
 
     def runDef(self, rho, amplitudes):
@@ -91,15 +91,15 @@ class StepPhaseSolver(SWSolver):
         xp = sw.get_array_module(src)
         
         if xp == np: 
-            if self._genCuda:
-                raise RuntimeError('CUDA function requires CuPy arrays')
+            if self._genCuda or self._genHIP:
+                raise RuntimeError('GPU function requires CuPy arrays')
             # NumPy array on CPU
             return self._MainFunc( 
                     dst.ctypes.data_as(ctypes.c_void_p),
                     src.ctypes.data_as(ctypes.c_void_p),
                     amplitudes.ctypes.data_as(ctypes.c_void_p))
         else:
-            if not self._genCuda:
+            if not self._genCuda and not self._genHIP:
                 raise RuntimeError('CPU function requires NumPy arrays')
             # CuPy array on GPU
             srcdev = ctypes.cast(src.data.ptr, ctypes.POINTER(ctypes.c_void_p))
@@ -118,11 +118,17 @@ class StepPhaseSolver(SWSolver):
         filetype = '.c'
         if self._genCuda:
             filetype = '.cu'
-        
+            print ( '_writeScript: namebase = ' + filename + ', nameroot = ' + nameroot, flush = True ) 
+        if self._genHIP:
+            filetype = '.cpp'
+            print ( '_writeScript: namebase = ' + filename + ', nameroot = ' + nameroot, flush = True ) 
+
         print('Load(fftx);', file = script_file)
         print('ImportAll(fftx);', file = script_file) 
         if self._genCuda:
-            print('conf := LocalConfig.fftx.confGPU();', file = script_file) 
+            print('conf := LocalConfig.fftx.confGPU();', file = script_file)
+        elif self._genHIP:
+            print ( 'conf := FFTXGlobals.defaultHIPConf();', file = script_file )
         else:
             print('conf := LocalConfig.fftx.defaultConf();', file = script_file) 
 
@@ -137,8 +143,8 @@ class StepPhaseSolver(SWSolver):
         print('    rec(fname := name, params := [symvar]));', file = script_file)
         print('', file = script_file)
         print('opts := conf.getOpts(t);', file = script_file)
-        if self._genCuda:
-            print('opts.wrapCFuncs := true;', file = script_file)
+        if self._genCuda or self._genHIP:
+            print ( 'opts.wrapCFuncs := true;', file = script_file )
         if self._opts.get(SW_OPT_REALCTYPE) == "float":
             print('opts.TRealCtype := "float";', file = script_file)
         print('Add(opts.includes, "<float.h>");',  file = script_file)
@@ -149,10 +155,3 @@ class StepPhaseSolver(SWSolver):
         print('', file = script_file)
         
     
-
-
-
-
-
-
-
