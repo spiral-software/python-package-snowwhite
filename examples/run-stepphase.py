@@ -21,18 +21,28 @@ if len(sys.argv) > 2:
 
 dims = [N,N,N]
 dimsTuple = tuple(dims)
+opts = { SW_OPT_REALCTYPE : c_type }
 
-# True or False for CUDA, CUDA requires CuPy
-# True or False for HIP, HIP requires CuPy
-genCuda = False
+##  True or False for CUDA, HIP -- requires CuPy
+genCuda = True                  ##  set as default
+genHIP  = False
+
+if len ( sys.argv ) > 3:
+    if sys.argv[3] == "CUDA":
+        genCuda = True
+    elif sys.argv[3] == "HIP":
+        genCuda = False
+        genHIP = True
+    elif sys.argv[3] == "CPU":
+        genCuda = False
+
 genCuda = genCuda and (cp != None)
 if genCuda:
-    opts = {SW_OPT_CUDA : genCuda, SW_OPT_REALCTYPE : c_type}
+    opts[SW_OPT_CUDA] = genCuda
 
-genHIP = True
 genHIP = genHIP and (cp != None)
 if genHIP:
-    opts = {SW_OPT_HIP : genHIP, SW_OPT_REALCTYPE : c_type}
+    opts[SW_OPT_HIP] = genHIP
 
 xp = np
 if genCuda or genHIP:
