@@ -40,12 +40,12 @@ class StepPhaseSolver(SWSolver):
             self._ctype = 'double'
              
         namebase = typ + 'stepphase_' + str(problem.dimN())
-        print ( 'StepPhaseSolver: namebase = ' + namebase, flush = True )
+        ##  print ( 'StepPhaseSolver: namebase = ' + namebase, flush = True )
         super(StepPhaseSolver, self).__init__(problem, namebase, opts)
 
     def runDef(self, rho, amplitudes):
         """Solve using internal Python definition."""
-        
+
         xp = get_array_module(rho)
         
         n = self._problem.dimN()
@@ -59,7 +59,7 @@ class StepPhaseSolver(SWSolver):
             amplitudes * xp.exp(1j*phases),
             rho_hat)
         rho_mod = xp.fft.irfftn(rho_hat_mod, rho.shape)
-        
+
         return rho_mod
         
     def _trace(self):
@@ -75,19 +75,19 @@ class StepPhaseSolver(SWSolver):
         if shape[0] == shape[2]:
             N = shape[0]
             Nx = (N // 2) + 1
-            _amps = cp.ascontiguousarray(amplitudes[:, :, :Nx])
+            _amps = xp.ascontiguousarray(amplitudes[:, :, :Nx])
         else:
             _amps = amplitudes
 
         n = self._problem.dimN()
-        dst = cp.zeros((n, n, n), src.dtype)
+        dst = xp.zeros((n, n, n), src.dtype)
         self._func(dst, src, _amps)
-        cp.divide(dst, cp.size(dst), out=dst)
+        xp.divide(dst, xp.size(dst), out=dst)
         return dst
                     
     def _func(self, dst, src, amplitudes):
         """Call the SPIRAL generated main function"""
-        
+
         xp = sw.get_array_module(src)
         
         if xp == np: 

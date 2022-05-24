@@ -77,11 +77,12 @@ class SWSolver:
             self._setupCFuncs(self._namebase)
 
         self._SharedLibAccess = ctypes.CDLL (sharedLibFullPath)
-        ##  print ( '__init__: Find main function in library, _namebase = ' + self._namebase, flush = True )
+        ##  print ( 'SWSolver.__init__: Find main function in library, _namebase = ' + self._namebase, flush = True )
         self._MainFunc = getattr(self._SharedLibAccess, self._namebase)
         if self._MainFunc == None:
-            msg = 'could not find function: ' + funcname
+            msg = 'could not find function: ' + self._namebase
             raise RuntimeError(msg)
+            
         self._initFunc()
 
     def __del__(self):
@@ -201,6 +202,7 @@ class SWSolver:
         funcname = 'init_' + self._namebase
         gf = getattr(self._SharedLibAccess, funcname, None)
         if gf != None:
+            ##  print ( 'SWSolver._initFunc: found init_' + self._namebase, flush = True )
             return gf()
         else:
             msg = 'could not find function: ' + funcname

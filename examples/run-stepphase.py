@@ -23,13 +23,13 @@ dims = [N,N,N]
 dimsTuple = tuple(dims)
 
 # True or False for CUDA, CUDA requires CuPy
-# True or False for HIP, HIP (to rocm/4.3.0) is supported by CuPy
-genCuda = True
+# True or False for HIP, HIP requires CuPy
+genCuda = False
 genCuda = genCuda and (cp != None)
 if genCuda:
     opts = {SW_OPT_CUDA : genCuda, SW_OPT_REALCTYPE : c_type}
 
-genHIP = False
+genHIP = True
 genHIP = genHIP and (cp != None)
 if genHIP:
     opts = {SW_OPT_HIP : genHIP, SW_OPT_REALCTYPE : c_type}
@@ -38,9 +38,7 @@ xp = np
 if genCuda or genHIP:
     xp = cp
 
-
-p1 = StepPhaseProblem(N)
-s1 = StepPhaseSolver(p1, opts)
+print ( 'N = ' + str(N) + ' c_type = ' + c_type + ' genCuda = ' + str(genCuda) + ' genHIP = ' + str(genHIP), flush = True )
 
 src = np.ones(dimsTuple, dtype=src_type)
 for  k in range (np.size(src)):
@@ -49,7 +47,11 @@ for  k in range (np.size(src)):
 if genCuda or genHIP:
     src = cp.asarray(src) 
 
-amplitudes = xp.absolute(xp.fft.rfftn(src))
+tmp = xp.fft.rfftn(src)
+amplitudes = xp.absolute ( tmp )  ##  xp.fft.rfftn(src))
+
+p1 = StepPhaseProblem(N)
+s1 = StepPhaseSolver(p1, opts)
 
 dstP = s1.runDef(src, amplitudes)
 dstC = s1.solve(src, amplitudes)
