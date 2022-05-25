@@ -21,28 +21,47 @@ if len(sys.argv) > 2:
 
 dims = [N,N,N]
 dimsTuple = tuple(dims)
+opts = { SW_OPT_REALCTYPE : c_type }
 
-# True of False for CUDA, CUDA requires CuPy
-genCuda = True
+##  True or False for CUDA, HIP -- requires CuPy
+genCuda = True                  ##  set as default
+genHIP  = False
+
+if len ( sys.argv ) > 3:
+    if sys.argv[3] == "CUDA":
+        genCuda = True
+    elif sys.argv[3] == "HIP":
+        genCuda = False
+        genHIP = True
+    elif sys.argv[3] == "CPU":
+        genCuda = False
+
 genCuda = genCuda and (cp != None)
-opts = {SW_OPT_CUDA : genCuda, SW_OPT_REALCTYPE : c_type}
+if genCuda:
+    opts[SW_OPT_CUDA] = genCuda
+
+genHIP = genHIP and (cp != None)
+if genHIP:
+    opts[SW_OPT_HIP] = genHIP
 
 xp = np
-if genCuda:
+if genCuda or genHIP:
     xp = cp
 
-
-p1 = StepPhaseProblem(N)
-s1 = StepPhaseSolver(p1, opts)
+print ( 'N = ' + str(N) + ' c_type = ' + c_type + ' genCuda = ' + str(genCuda) + ' genHIP = ' + str(genHIP), flush = True )
 
 src = np.ones(dimsTuple, dtype=src_type)
 for  k in range (np.size(src)):
     src.itemset(k,np.random.random()*10.0)
 
-if genCuda:
+if genCuda or genHIP:
     src = cp.asarray(src) 
 
-amplitudes = xp.absolute(xp.fft.rfftn(src))
+tmp = xp.fft.rfftn(src)
+amplitudes = xp.absolute ( tmp )  ##  xp.fft.rfftn(src))
+
+p1 = StepPhaseProblem(N)
+s1 = StepPhaseSolver(p1, opts)
 
 dstP = s1.runDef(src, amplitudes)
 dstC = s1.solve(src, amplitudes)

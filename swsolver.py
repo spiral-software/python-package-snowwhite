@@ -21,6 +21,7 @@ import sys
 
 SW_OPT_COLMAJOR         = 'colmajor'
 SW_OPT_CUDA             = 'cuda'
+SW_OPT_HIP              = 'hip'
 SW_OPT_KEEPTEMP         = 'keeptemp'
 SW_OPT_MPI              = 'mpi'
 SW_OPT_PRINTRULETREE    = 'printruletree'
@@ -43,6 +44,7 @@ class SWSolver:
         self._problem = problem
         self._opts = opts
         self._colMajor = self._opts.get(SW_OPT_COLMAJOR, False)
+        self._genHIP = self._opts.get(SW_OPT_HIP, False)
         self._genCuda = self._opts.get(SW_OPT_CUDA, False)
         self._keeptemp = self._opts.get(SW_OPT_KEEPTEMP, False)
         self._withMPI = self._opts.get(SW_OPT_MPI, False)
@@ -61,6 +63,8 @@ class SWSolver:
         
         if self._genCuda:
             self._namebase = namebase + '_cu'
+        elif self._genHIP:
+            self._namebase = namebase + '_hip'
         else:
             self._namebase = namebase
         if sys.platform == 'win32':
@@ -73,10 +77,12 @@ class SWSolver:
             self._setupCFuncs(self._namebase)
 
         self._SharedLibAccess = ctypes.CDLL (sharedLibFullPath)
+        ##  print ( 'SWSolver.__init__: Find main function in library, _namebase = ' + self._namebase, flush = True )
         self._MainFunc = getattr(self._SharedLibAccess, self._namebase)
         if self._MainFunc == None:
-            msg = 'could not find function: ' + funcname
+            msg = 'could not find function: ' + self._namebase
             raise RuntimeError(msg)
+            
         self._initFunc()
 
     def __del__(self):
@@ -110,9 +116,11 @@ class SWSolver:
     def _callSpiral(self, script):
         """Run SPIRAL with script as input."""
         if self._genCuda:
-            print("Generating CUDA code");
+            print ( 'Generating CUDA code', flush = True )
+        elif self._genHIP:
+            print ( 'Generating HIP code', flush = True )
         else:
-            print("Generating C code");
+            print ( 'Generating C code' )
         if sys.platform == 'win32':
             spiralexe = self._spiralname + '.bat'
             self._runResult = subprocess.run([spiralexe,'<',script], shell=True, capture_output=True)
@@ -142,23 +150,30 @@ class SWSolver:
         cmake_defroot = '-DFILEROOT:STRING=' + basename
         if sys.platform == 'win32':
             ##  NOTE: Ensure Python installed on Windows is 64 bit
-            cmd = ['cmake', cmake_defroot]
+            cmd = 'cmake ' + cmake_defroot
             if self._genCuda:
-                cmd.append('-DHASCUDA=1')
+                cmd += ' -DHASCUDA=1'
             if self._withMPI:
-                cmd.append('-DHASMPI=1')
-            cmd.append('-DPY_LIBS_DIR=' + self._libsDir)
-            cmd = cmd + ['..', '&&', 'cmake', '--build', '.', '--config', 'Release', '--target', 'install']
-            print(cmd)
+                cmd += ' -DHASMPI=1'
+            if self._genHIP:
+                cmd += ' -DHASHIP=1 -DCMAKE_CXX_COMPILER=hipcc'
+
+            cmd += ' -DPY_LIBS_DIR=' + self._libsDir
+            cmd += ' .. && cmake --build . --config Release --target install'
+            print ( cmd )
             self._runResult = subprocess.run (cmd, shell=True, capture_output=False)
         else:
             cmd = 'cmake ' + cmake_defroot
             if self._genCuda:
-                cmd = cmd + ' -DHASCUDA=1'
+                cmd += ' -DHASCUDA=1'
             if self._withMPI:
-                cmd = cmd + ' -DHASMPI=1'
-            cmd = cmd + ' -DPY_LIBS_DIR=' + self._libsDir
-            cmd = cmd + ' .. && make install'
+                cmd += ' -DHASMPI=1'
+            if self._genHIP:
+                cmd += ' -DHASHIP=1 -DCMAKE_CXX_COMPILER=hipcc'
+
+            cmd += ' -DPY_LIBS_DIR=' + self._libsDir
+            cmd += ' .. && make install'
+            print ( cmd )
             self._runResult = subprocess.run(cmd, shell=True)
 
         os.chdir(cwd)
@@ -187,6 +202,7 @@ class SWSolver:
         funcname = 'init_' + self._namebase
         gf = getattr(self._SharedLibAccess, funcname, None)
         if gf != None:
+            ##  print ( 'SWSolver._initFunc: found init_' + self._namebase, flush = True )
             return gf()
         else:
             msg = 'could not find function: ' + funcname
@@ -198,14 +214,14 @@ class SWSolver:
         xp = sw.get_array_module(src)
         
         if xp == np: 
-            if self._genCuda:
-                raise RuntimeError('CUDA function requires CuPy arrays')
+            if self._genCuda or self._genHIP:
+                raise RuntimeError('GPU function requires CuPy arrays')
             # NumPy array on CPU
             return self._MainFunc( 
                     dst.ctypes.data_as(ctypes.c_void_p),
                     src.ctypes.data_as(ctypes.c_void_p) )
         else:
-            if not self._genCuda:
+            if not self._genCuda and not self._genHIP:
                 raise RuntimeError('CPU function requires NumPy arrays')
             # CuPy array on GPU
             srcdev = ctypes.cast(src.data.ptr, ctypes.POINTER(ctypes.c_void_p))
@@ -216,6 +232,7 @@ class SWSolver:
     def _destroyFunc(self):
         """Call the SPIRAL generated destroy function"""
         funcname = 'destroy_' + self._namebase
+        ##  print ( '_destroyFunc: Find destroy func in library, funcname = ' + funcname, flush = True )
         gf = getattr(self._SharedLibAccess, funcname, None)
         if gf != None:
             return gf()

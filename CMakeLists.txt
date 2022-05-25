@@ -11,29 +11,60 @@ cmake_minimum_required (VERSION 3.14)
 set (CMAKE_BUILD_TYPE Release  CACHE STRING "Debug, Release, RelWithDebInfo, MinSizeRel")
 set ( FILEROOT "hockney_stub" CACHE STRING "when problem is defined will get correct/full name" )
 set ( HASCUDA OFF CACHE BOOL "when true build for CUDA")
+set ( HASHIP OFF CACHE BOOL "when true build for HIP")
 set ( HASMPI OFF CACHE BOOL "when true build for MPI")
 
 if ( NOT DEFINED PY_LIBS_DIR )
-	set ( PY_LIBS_DIR ${CMAKE_SOURCE_DIR} )
+    set ( PY_LIBS_DIR ${CMAKE_SOURCE_DIR} )
 endif ()
 
 
-if (${HASCUDA})
-	project (SPIRAL_CUDA
-         VERSION 1.0.1
-                DESCRIPTION "SPIRAL CUDA code generation"
-                LANGUAGES C CUDA)
-	if (${HASMPI})
-		set ( SOURCES ${FILEROOT}.cu mpimain.cu)
-	else ()
-		set ( SOURCES ${FILEROOT}.cu )
-	endif ()
+if ( ${HASCUDA} )
+    ##  Build for CUDA is defined
+    project ( SPIRAL_CUDA
+        VERSION 1.0.1
+        DESCRIPTION "SPIRAL CUDA code generation"
+        LANGUAGES C CUDA )
+    if ( ${HASMPI} )
+	set ( SOURCES ${FILEROOT}.cu mpimain.cu )
+    else ()
+	set ( SOURCES ${FILEROOT}.cu )
+    endif ()
+
+elseif ( ${HASHIP} )
+    ##  Build for HIP is defined
+    set ( CMAKE_CXX_COMPILER "hipcc" )
+    project ( SPIRAL_HIP
+	VERSION 1.0.1
+	DESCRIPTION "SPIRAL HIP code generation"
+	LANGUAGES CXX )
+    set ( SOURCES ${FILEROOT}.cpp )
+
+    ##  Setup what we need to build for HIP/ROCm
+    list ( APPEND CMAKE_PREFIX_PATH /opt/rocm/hip /opt/rocm )
+    find_package ( hip REQUIRED )
+    if ( ${hip_FOUND} )
+	##  HIP/ROCm support found
+	message ( STATUS "Found HIP: Version = ${hip_VERSION}" )
+    else ()
+	message ( SEND_ERROR "HIP NOT FOUND: HIP is required to build" )
+    endif ()
+
+    ##  Adjust include and library directories
+    ##  Need to add $ROCM_PATH for includes and libraries
+    if ( DEFINED ENV{ROCM_PATH} )
+	message ( STATUS "ROCM_PATH is defined: $ENV{ROCM_PATH}" )
+	include_directories ( $ENV{ROCM_PATH}/hipfft/include $ENV{ROCM_PATH}/include )
+    endif ()
+    list ( APPEND LIBS_FOR_HIP hipfft rocfft )
+
 else ()
-	project (SPIRAL_CPU
-         VERSION 1.0.1
-                DESCRIPTION "SPIRAL C code generation"
-                LANGUAGES C CXX)
-	set ( SOURCES ${FILEROOT}.c )
+    ##  No GPU selected, build for CPU
+    project ( SPIRAL_CPU
+        VERSION 1.0.1
+        DESCRIPTION "SPIRAL C code generation"
+        LANGUAGES C CXX )
+    set ( SOURCES ${FILEROOT}.c )
 endif ()
 
 
@@ -46,7 +77,7 @@ else ()
 endif ()
 
 if (${HASMPI})
-	set (CUDA_COMPILE_FLAGS ${CUDA_COMPILE_FLAGS} -DFUNCNAME=${FILEROOT})
+    list ( APPEND CUDA_COMPILE_FLAGS -DFUNCNAME=${FILEROOT} )
 endif ()
 
 
@@ -79,17 +110,17 @@ endif()
 
 if ( DEFINED ENV{SPIRAL_HOME} )
     message ( STATUS "SPIRAL_HOME = $ENV{SPIRAL_HOME}" )
-    set ( INC_DIR $ENV{SPIRAL_HOME}/profiler/targets )
-	set ( INC_DIR2 $ENV{SPIRAL_HOME}/profiler/targets/include )
+    set ( INC_DIR $ENV{SPIRAL_HOME}/profiler/targets
+		  $ENV{SPIRAL_HOME}/profiler/targets/include )
 else ()
     if ( "x${SPIRAL_HOME}" STREQUAL "x" )
 	message ( FATAL_ERROR "SPIRAL_HOME environment variable undefined and not specified on command line" )
     endif ()
-    set ( INC_DIR ${SPIRAL_HOME}/profiler/targets )
+    set ( INC_DIR ${SPIRAL_HOME}/profiler/targets  ${SPIRAL_HOME}/profiler/targets/include )
 endif ()
     
 message ( STATUS "Profiler target directory = ${INC_DIR}" )
-include_directories (${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR} ${INC_DIR} ${INC_DIR2} )
+target_include_directories ( ${PROJECT} PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR} ${INC_DIR} )
 
 install (TARGETS ${PROJECT} DESTINATION ${PY_LIBS_DIR})
 
