@@ -17,5 +17,9 @@ def get_array_module(*args):
         return _numpy
 
 
-
+def has_ROCm():
+    if _cupy != None:
+        return (_cupy._environment.get_rocm_path() != None)
+    else:
+        return False
 
