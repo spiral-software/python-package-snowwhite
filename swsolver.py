@@ -241,7 +241,8 @@ class SWSolver:
             raise RuntimeError(msg)
 
     def embedCube(self, N, src, Ns):
-        retCube = np.zeros(shape=(N, N, N))
+        xp = sw.get_array_module(src)
+        retCube = xp.zeros(shape=(N, N, N))
         for k in range(Ns):
             for j in range(Ns):
                 for i in range(Ns):
@@ -256,7 +257,8 @@ class SWSolver:
 		        
     def rfftn(self, x):
         """ forward multi-dimensional real DFT """
-        ret = np.fft.rfftn(x) # executes z, then y, then x
+        xp = sw.get_array_module(x)
+        ret = xp.fft.rfftn(x) # executes z, then y, then x
         if self._tracingOn:
             N = x.shape[0]
             nnn = '[' + str(N) + ',' + str(N) + ',' + str(N) + ']'
@@ -266,16 +268,18 @@ class SWSolver:
 
     def pointwise(self, x, y):
         """ pointwise array multiplication """
+        xp = sw.get_array_module(x)
         ret = x * y
         if self._tracingOn:
-            nElems = np.size(x) * 2
+            nElems = xp.size(x) * 2
             st = 'RCDiag(FDataOfs(symvar, ' + str(nElems) + ', 0))'
             self._callGraph.insert(0, st)
         return ret
 
     def irfftn(self, x, shape):
         """ inverse multi-dimensional real DFT """
-        ret = np.fft.irfftn(x, s=shape) # executes x, then y, then z
+        xp = sw.get_array_module(x)
+        ret = xp.fft.irfftn(x, s=shape) # executes x, then y, then z
         if self._tracingOn:
             N = x.shape[0]
             nnn = '[' + str(N) + ',' + str(N) + ',' + str(N) + ']'
