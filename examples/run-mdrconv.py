@@ -22,10 +22,10 @@ if genCuda:
 p1 = MdrconvProblem(N)
 s1 = MdrconvSolver(p1, {SW_OPT_CUDA : genCuda, SW_OPT_KEEPTEMP : False, SW_OPT_PRINTRULETREE : False})
 
-input_data = s1.buildTestInput()
+(input_data, symbol) = s1.buildTestInput()
 
-output_Py = s1.runDef(input_data)
-output_C = s1.scale(s1.solve(input_data))
+output_Py = s1.runDef(input_data, symbol)
+output_C = s1.scale(s1.solve(input_data, symbol))
 
 diff = np.max ( np.absolute (  output_Py - output_C ))
 print ( 'Max Diff between Python/C = ' + str(diff) )
