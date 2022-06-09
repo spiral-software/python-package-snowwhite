@@ -1,5 +1,5 @@
 ##
-## Copyright (c) 2018-2020, Carnegie Mellon University
+## Copyright (c) 2018-2022, Carnegie Mellon University
 ## All rights reserved.
 ##
 ## See LICENSE file for full information
@@ -9,10 +9,11 @@
 cmake_minimum_required (VERSION 3.14)
 
 set (CMAKE_BUILD_TYPE Release  CACHE STRING "Debug, Release, RelWithDebInfo, MinSizeRel")
-set ( FILEROOT "hockney_stub" CACHE STRING "when problem is defined will get correct/full name" )
+set ( FILEROOT "undefined" CACHE STRING "unique transform root name for source and library files" )
 set ( HASCUDA OFF CACHE BOOL "when true build for CUDA")
 set ( HASHIP OFF CACHE BOOL "when true build for HIP")
 set ( HASMPI OFF CACHE BOOL "when true build for MPI")
+set ( HAS_METADATA OFF CACHE BOOL "when true include metadata file in build")
 
 if ( NOT DEFINED PY_LIBS_DIR )
     set ( PY_LIBS_DIR ${CMAKE_SOURCE_DIR} )
@@ -66,6 +67,10 @@ else ()
         LANGUAGES C CXX )
     set ( SOURCES ${FILEROOT}.c )
 endif ()
+
+if ( ${HAS_METADATA} )
+	list ( APPEND SOURCES ${FILEROOT}_meta.c )
+endif()
 
 
 ##  Setup flags if needed

@@ -21,6 +21,7 @@ import sys
 
 SW_OPT_COLMAJOR         = 'colmajor'
 SW_OPT_KEEPTEMP         = 'keeptemp'
+SW_OPT_METADATA         = 'false'
 SW_OPT_MPI              = 'mpi'
 SW_OPT_PLATFORM         = 'platform'
 SW_OPT_PRINTRULETREE    = 'printruletree'
@@ -33,8 +34,11 @@ SW_INVERSE  = -1
 
 SW_CPU  = 'CPU'
 SW_CUDA = 'CUDA'
-SW_HIP  = 'HIP'   
+SW_HIP  = 'HIP'
 
+SW_METAFILE_PREFIX  = '_meta.c'
+SW_METADATA_START   = '!!START_METADATA!!'
+SW_METADATA_END     = '!!END_METADATA!!'
 
 
 
@@ -63,6 +67,7 @@ class SWSolver:
         self._SharedLibAccess = None
         self._MainFunc = None
         self._spiralname = 'spiral'
+        self._addMetadata = self._opts.get(SW_OPT_METADATA, False)
         
         # find and possibly create the subdirectory of temp dirs
         moduleDir = os.path.dirname(os.path.realpath(__file__))
@@ -104,6 +109,9 @@ class SWSolver:
         
     def _writeScript(self, script_file):
         raise NotImplementedError()
+        
+    def _writeMetadata(self, metadata_file):
+        raise NotImplementedError()
     
     def _genScript(self, filename : str):
         print("Tracing Python description to generate SPIRAL script");
@@ -120,6 +128,19 @@ class SWSolver:
         print(file = script_file)
         self._writeScript(script_file)
         script_file.close()
+    
+    def _createMetadataFile(self, basename):
+        filename = basename + SW_METAFILE_PREFIX
+        try:
+            metadata_file = open(filename, 'w')
+        except:
+            print('Error: Could not open ' + filename + ' for writing')
+            return
+        print('char *' + basename + '_metadata = "' + SW_METADATA_START + '\\', file = metadata_file)  
+        self._writeMetadata(metadata_file)
+        print(SW_METADATA_END + '";', file = metadata_file)  
+        metadata_file.close()
+    
         
     def _callSpiral(self, script):
         """Run SPIRAL with script as input."""
@@ -156,30 +177,27 @@ class SWSolver:
         os.chdir(tempdir)
 
         cmake_defroot = '-DFILEROOT:STRING=' + basename
+        
+        cmd = 'cmake ' + cmake_defroot
+        if self._genCuda:
+            cmd += ' -DHASCUDA=1'
+        elif self._genHIP:
+            cmd += ' -DHASHIP=1 -DCMAKE_CXX_COMPILER=hipcc'    
+            
+        if self._withMPI:
+            cmd += ' -DHASMPI=1'
+            
+        if self._addMetadata:
+            cmd += ' -DHAS_METADATA=1'
+
+        cmd += ' -DPY_LIBS_DIR=' + self._libsDir
+        
         if sys.platform == 'win32':
             ##  NOTE: Ensure Python installed on Windows is 64 bit
-            cmd = 'cmake ' + cmake_defroot
-            if self._genCuda:
-                cmd += ' -DHASCUDA=1'
-            if self._withMPI:
-                cmd += ' -DHASMPI=1'
-            if self._genHIP:
-                cmd += ' -DHASHIP=1 -DCMAKE_CXX_COMPILER=hipcc'
-
-            cmd += ' -DPY_LIBS_DIR=' + self._libsDir
             cmd += ' .. && cmake --build . --config Release --target install'
             print ( cmd )
             self._runResult = subprocess.run (cmd, shell=True, capture_output=False)
         else:
-            cmd = 'cmake ' + cmake_defroot
-            if self._genCuda:
-                cmd += ' -DHASCUDA=1'
-            if self._withMPI:
-                cmd += ' -DHASMPI=1'
-            if self._genHIP:
-                cmd += ' -DHASHIP=1 -DCMAKE_CXX_COMPILER=hipcc'
-
-            cmd += ' -DPY_LIBS_DIR=' + self._libsDir
             cmd += ' .. && make install'
             print ( cmd )
             self._runResult = subprocess.run(cmd, shell=True)
@@ -193,6 +211,8 @@ class SWSolver:
         script = basename + ".g"
         self._genScript(script)
         self._callSpiral(script)
+        if self._addMetadata:
+            self._createMetadataFile(basename)
         self._callCMake(basename)
         
     def _trace(self):

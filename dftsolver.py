@@ -38,6 +38,8 @@ class DftSolver(SWSolver):
         else:
             namebase = 'dft_inv' + c + n
             
+        opts[SW_OPT_METADATA] = True
+            
         super(DftSolver, self).__init__(problem, namebase, opts)
 
     def runDef(self, src):
@@ -89,6 +91,9 @@ class DftSolver(SWSolver):
         print('PrintTo("' + nameroot + filetype + '", PrintCode(nameroot, code, opts));', 
             file = script_file)
         print("", file = script_file)
+        
+    def _writeMetadata(self, metadata_file):
+        pass
 
 
 
