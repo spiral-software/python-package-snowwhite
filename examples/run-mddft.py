@@ -14,7 +14,7 @@ dimsTuple = tuple(dims)
 # True of False for CUDA, CUDA requires CuPy
 genCuda = True
 genCuda = genCuda and (cp != None)
-opts = {SW_OPT_CUDA : genCuda}
+opts = {SW_OPT_PLATFORM : SW_CUDA if genCuda else SW_CPU}
 
 # direction, SW_FORWARD or SW_INVERSE
 k = SW_FORWARD

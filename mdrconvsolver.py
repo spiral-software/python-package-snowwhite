@@ -29,7 +29,6 @@ class MdrconvSolver(SWSolver):
     def __init__(self, problem: MdrconvProblem, opts = {}):
         if not isinstance(problem, MdrconvProblem):
             raise TypeError("problem must be an MdrconvProblem")
-        gpu = opts.get(SW_OPT_CUDA, False)
         n = str(problem.dimN())
         c = "_";
         namebase = "Mdrconv" + c + n

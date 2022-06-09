@@ -20,15 +20,23 @@ import ctypes
 import sys
 
 SW_OPT_COLMAJOR         = 'colmajor'
-SW_OPT_CUDA             = 'cuda'
-SW_OPT_HIP              = 'hip'
 SW_OPT_KEEPTEMP         = 'keeptemp'
 SW_OPT_MPI              = 'mpi'
+SW_OPT_PLATFORM         = 'platform'
 SW_OPT_PRINTRULETREE    = 'printruletree'
 SW_OPT_REALCTYPE        = 'realctype'
 
 SW_FORWARD  = 1
 SW_INVERSE  = -1
+
+# platforms
+
+SW_CPU  = 'CPU'
+SW_CUDA = 'CUDA'
+SW_HIP  = 'HIP'   
+
+
+
 
 class SWProblem:
     """Base class for SnowWhite problem."""
@@ -44,8 +52,8 @@ class SWSolver:
         self._problem = problem
         self._opts = opts
         self._colMajor = self._opts.get(SW_OPT_COLMAJOR, False)
-        self._genHIP = self._opts.get(SW_OPT_HIP, False)
-        self._genCuda = self._opts.get(SW_OPT_CUDA, False)
+        self._genHIP = (self._opts.get(SW_OPT_PLATFORM, SW_CPU) == SW_HIP)
+        self._genCuda = (self._opts.get(SW_OPT_PLATFORM, SW_CPU) == SW_CUDA)
         self._keeptemp = self._opts.get(SW_OPT_KEEPTEMP, False)
         self._withMPI = self._opts.get(SW_OPT_MPI, False)
         self._printRuleTree = self._opts.get(SW_OPT_PRINTRULETREE, False)

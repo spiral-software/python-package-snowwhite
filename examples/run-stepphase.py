@@ -27,28 +27,15 @@ opts = { SW_OPT_REALCTYPE : c_type }
 genCuda = True                  ##  set as default
 genHIP  = False
 
-if len ( sys.argv ) > 3:
-    if sys.argv[3] == "CUDA":
-        genCuda = True
-    elif sys.argv[3] == "HIP":
-        genCuda = False
-        genHIP = True
-    elif sys.argv[3] == "CPU":
-        genCuda = False
-
-genCuda = genCuda and (cp != None)
-if genCuda:
-    opts[SW_OPT_CUDA] = genCuda
-
-genHIP = genHIP and (cp != None)
-if genHIP:
-    opts[SW_OPT_HIP] = genHIP
-
 xp = np
-if genCuda or genHIP:
-    xp = cp
-
-print ( 'N = ' + str(N) + ' c_type = ' + c_type + ' genCuda = ' + str(genCuda) + ' genHIP = ' + str(genHIP), flush = True )
+platform = SW_CPU
+if len ( sys.argv ) > 3:
+    if sys.argv[3] == "CUDA" and (cp != None):
+        platform = SW_CUDA
+        xp = cp
+    elif sys.argv[3] == "HIP" and (cp != None):
+        platform = SW_HIP
+        xp = cp
 
 src = np.ones(dimsTuple, dtype=src_type)
 for  k in range (np.size(src)):

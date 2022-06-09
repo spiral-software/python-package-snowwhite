@@ -28,9 +28,9 @@ class StepPhaseProblem(SWProblem):
         
 
 class StepPhaseSolver(SWSolver):
-    def __init__(self, problem: StepPhaseProblem, opts = {SW_OPT_CUDA : False, SW_OPT_HIP : False}):
+    def __init__(self, problem: StepPhaseProblem, opts = {}):
         if not isinstance(problem, StepPhaseProblem):
-            raise TypeError("problem must be an StepPhaseProblem")
+            raise TypeError("problem must be a StepPhaseProblem")
         
         if opts.get(SW_OPT_REALCTYPE, 0) == 'float':
             typ = 'c'
@@ -40,7 +40,7 @@ class StepPhaseSolver(SWSolver):
             self._ctype = 'double'
              
         namebase = typ + 'stepphase_' + str(problem.dimN())
-        ##  print ( 'StepPhaseSolver: namebase = ' + namebase, flush = True )
+
         super(StepPhaseSolver, self).__init__(problem, namebase, opts)
 
     def runDef(self, rho, amplitudes):

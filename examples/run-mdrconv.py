@@ -20,7 +20,7 @@ if genCuda:
 
 
 p1 = MdrconvProblem(N)
-s1 = MdrconvSolver(p1, {SW_OPT_CUDA : genCuda, SW_OPT_KEEPTEMP : False, SW_OPT_PRINTRULETREE : False})
+s1 = MdrconvSolver(p1, {SW_OPT_PLATFORM : SW_CUDA, SW_OPT_KEEPTEMP : False, SW_OPT_PRINTRULETREE : False})
 
 (input_data, symbol) = s1.buildTestInput()
 

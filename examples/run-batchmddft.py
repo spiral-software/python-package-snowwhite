@@ -15,10 +15,7 @@ if len(sys.argv) > 2:
     
 p1 = BatchMddftProblem(n, b)
 
-# True or False for CUDA
-genCuda = True
-
-s1 = BatchMddftSolver(p1, {SW_OPT_CUDA : genCuda, 
+s1 = BatchMddftSolver(p1, {SW_OPT_PLATFORM : SW_CUDA, 
     SW_OPT_KEEPTEMP : False, SW_OPT_PRINTRULETREE : True})
 
 input_data_Py, input_data_C = s1.buildTestInput()
