@@ -92,7 +92,7 @@ class DftSolver(SWSolver):
             file = script_file)
         print("", file = script_file)
         
-    def _writeMetadata(self, metadata_file):
+    def _buildMetadata(self):
         pass
 
 

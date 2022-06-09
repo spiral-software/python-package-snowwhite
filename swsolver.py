@@ -110,7 +110,7 @@ class SWSolver:
     def _writeScript(self, script_file):
         raise NotImplementedError()
         
-    def _writeMetadata(self, metadata_file):
+    def _buildMetadata(self):
         raise NotImplementedError()
     
     def _genScript(self, filename : str):
@@ -137,7 +137,7 @@ class SWSolver:
             print('Error: Could not open ' + filename + ' for writing')
             return
         print('char *' + basename + '_metadata = "' + SW_METADATA_START + '\\', file = metadata_file)  
-        self._writeMetadata(metadata_file)
+        metadata = self._buildMetadata()
         print(SW_METADATA_END + '";', file = metadata_file)  
         metadata_file.close()
     
