@@ -1,10 +1,12 @@
 
+from snowwhite import *
 import snowwhite as sw
 
 import datetime
 import subprocess
 import os
 import sys
+import json
 
 import tempfile
 import shutil
@@ -18,27 +20,6 @@ except ModuleNotFoundError:
 
 import ctypes
 import sys
-
-SW_OPT_COLMAJOR         = 'colmajor'
-SW_OPT_KEEPTEMP         = 'keeptemp'
-SW_OPT_METADATA         = 'false'
-SW_OPT_MPI              = 'mpi'
-SW_OPT_PLATFORM         = 'platform'
-SW_OPT_PRINTRULETREE    = 'printruletree'
-SW_OPT_REALCTYPE        = 'realctype'
-
-SW_FORWARD  = 1
-SW_INVERSE  = -1
-
-# platforms
-
-SW_CPU  = 'CPU'
-SW_CUDA = 'CUDA'
-SW_HIP  = 'HIP'
-
-SW_METAFILE_PREFIX  = '_meta.c'
-SW_METADATA_START   = '!!START_METADATA!!'
-SW_METADATA_END     = '!!END_METADATA!!'
 
 
 
@@ -67,7 +48,8 @@ class SWSolver:
         self._SharedLibAccess = None
         self._MainFunc = None
         self._spiralname = 'spiral'
-        self._addMetadata = self._opts.get(SW_OPT_METADATA, False)
+        self._metadata = dict()
+        self._includeMetadata = self._opts.get(SW_OPT_METADATA, False)
         
         # find and possibly create the subdirectory of temp dirs
         moduleDir = os.path.dirname(os.path.realpath(__file__))
@@ -109,9 +91,6 @@ class SWSolver:
         
     def _writeScript(self, script_file):
         raise NotImplementedError()
-        
-    def _buildMetadata(self):
-        raise NotImplementedError()
     
     def _genScript(self, filename : str):
         print("Tracing Python description to generate SPIRAL script");
@@ -128,8 +107,18 @@ class SWSolver:
         print(file = script_file)
         self._writeScript(script_file)
         script_file.close()
+        
+    def _functionMetadata(self):
+        return None
+        
+    def _buildMetadata(self):
+        md = self._metadata
+        md[SW_KEY_BUILDINFO] = spiralBuildInfo()
+        funcmeta = self._functionMetadata()
+        md[SW_KEY_TRANSFORMS] = [ funcmeta ]
     
     def _createMetadataFile(self, basename):
+        """Write metadata source file."""
         filename = basename + SW_METAFILE_PREFIX
         try:
             metadata_file = open(filename, 'w')
@@ -137,7 +126,11 @@ class SWSolver:
             print('Error: Could not open ' + filename + ' for writing')
             return
         print('char *' + basename + '_metadata = "' + SW_METADATA_START + '\\', file = metadata_file)  
-        metadata = self._buildMetadata()
+        self._buildMetadata()
+        metastr = json.dumps(self._metadata, sort_keys=True, indent=4)
+        metastr = metastr.replace('"', '\\"') + '\\'
+        metastr = metastr.replace('\n', '\\\n')
+        print(metastr, file = metadata_file) 
         print(SW_METADATA_END + '";', file = metadata_file)  
         metadata_file.close()
     
@@ -187,7 +180,7 @@ class SWSolver:
         if self._withMPI:
             cmd += ' -DHASMPI=1'
             
-        if self._addMetadata:
+        if self._includeMetadata:
             cmd += ' -DHAS_METADATA=1'
 
         cmd += ' -DPY_LIBS_DIR=' + self._libsDir
@@ -211,7 +204,7 @@ class SWSolver:
         script = basename + ".g"
         self._genScript(script)
         self._callSpiral(script)
-        if self._addMetadata:
+        if self._includeMetadata:
             self._createMetadataFile(basename)
         self._callCMake(basename)
         
