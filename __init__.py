@@ -35,6 +35,9 @@ SW_METADATA_END     = '!!END_METADATA!!'
 SW_METAFILE_EXT     = '_meta.c'
 SW_METAVAR_EXT      = '_metadata'
 
+SW_STR_DOUBLE       = 'Double'
+SW_STR_SINGLE       = 'Single'
+
 SW_STR_FORWARD      = 'Forward'
 SW_STR_INVERSE      = 'Inverse'
 
@@ -50,6 +53,7 @@ SW_KEY_EXEC             = 'Exec'
 SW_KEY_FUNCTIONS        = 'Functions'
 SW_KEY_INIT             = 'Init'
 SW_KEY_NAMES            = 'Names'
+SW_KEY_PRECISION        = 'Precision'
 SW_KEY_SPIRALBUILDINFO  = 'SpiralBuildInfo'
 SW_KEY_TRANSFORMS       = 'Transforms'
 SW_KEY_TRANSFORMTYPE    = 'TransformType'
