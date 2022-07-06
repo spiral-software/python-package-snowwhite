@@ -4,6 +4,7 @@ MDPRDFT Module
 
 
 from snowwhite import *
+from snowwhite.swsolver import *
 import numpy as np
 
 try:
