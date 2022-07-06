@@ -113,17 +113,8 @@ class MddftSolver(SWSolver):
         print('PrintTo("' + filename + filetype + '", opts.prettyPrint(c));', file = script_file)
         print("", file = script_file)
         
-    def _functionMetadata(self):
-        obj = dict()
+    def _setFunctionMetadata(self, obj):
         obj[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_MDDFT
-        obj[SW_KEY_DIRECTION]  = SW_STR_INVERSE if self._problem.direction() == SW_INVERSE else SW_STR_FORWARD
-        obj[SW_KEY_PRECISION] = SW_STR_SINGLE if self._opts.get(SW_OPT_REALCTYPE) == "float" else SW_STR_DOUBLE
         obj[SW_KEY_DIMENSIONCOUNT] = len(self._problem.dimensions())
         obj[SW_KEY_DIMENSIONS] = self._problem.dimensions()
-        names = dict()
-        obj[SW_KEY_NAMES] = names
-        names[SW_KEY_EXEC] = self._namebase
-        names[SW_KEY_INIT] = 'init_' + self._namebase
-        names[SW_KEY_DESTROY] = 'destroy_' + self._namebase
-        return obj
         

@@ -109,16 +109,24 @@ class SWSolver:
         self._writeScript(script_file)
         script_file.close()
         
-    def _functionMetadata(self):
-        return None
+    def _setFunctionMetadata(self, obj):
+        pass
         
     def _buildMetadata(self):
         md = self._metadata
         md[SW_KEY_SPIRALBUILDINFO] = spiralBuildInfo()
-        funcmeta = self._functionMetadata()
-        if type(funcmeta) is dict:
-            md[SW_KEY_TRANSFORMS] = [ funcmeta ]
-            md[SW_KEY_TRANSFORMTYPES] = [ funcmeta.get(SW_KEY_TRANSFORMTYPE, SW_TRANSFORM_UNKNOWN) ]
+        funcmeta = dict()
+        md[SW_KEY_TRANSFORMS] = [ funcmeta ]
+        funcmeta[SW_KEY_DIRECTION]  = SW_STR_INVERSE if self._problem.direction() == SW_INVERSE else SW_STR_FORWARD
+        funcmeta[SW_KEY_PRECISION] = SW_STR_SINGLE if self._opts.get(SW_OPT_REALCTYPE) == "float" else SW_STR_DOUBLE
+        funcmeta[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_UNKNOWN
+        names = dict()
+        funcmeta[SW_KEY_NAMES] = names
+        names[SW_KEY_EXEC] = self._namebase
+        names[SW_KEY_INIT] = 'init_' + self._namebase
+        names[SW_KEY_DESTROY] = 'destroy_' + self._namebase
+        self._setFunctionMetadata(funcmeta)
+        md[SW_KEY_TRANSFORMTYPES] = [ funcmeta.get(SW_KEY_TRANSFORMTYPE) ]
     
     def _createMetadataFile(self, basename):
         """Write metadata source file."""

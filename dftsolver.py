@@ -93,19 +93,10 @@ class DftSolver(SWSolver):
             file = script_file)
         print("", file = script_file)
         
-    def _functionMetadata(self):
-        obj = dict()
+    def _setFunctionMetadata(self, obj):
         obj[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_DFT
-        obj[SW_KEY_DIRECTION]  = SW_STR_INVERSE if self._problem.direction() == SW_INVERSE else SW_STR_FORWARD
-        obj[SW_KEY_PRECISION] = SW_STR_SINGLE if self._opts.get(SW_OPT_REALCTYPE) == "float" else SW_STR_DOUBLE
         obj[SW_KEY_DIMENSIONCOUNT] = 1
-        obj[SW_KEY_DIMENSIONS]       = [ self._problem.dimN() ]
-        names = dict()
-        obj[SW_KEY_NAMES] = names
-        names[SW_KEY_EXEC] = self._namebase
-        names[SW_KEY_INIT] = 'init_' + self._namebase
-        names[SW_KEY_DESTROY] = 'destroy_' + self._namebase
-        return obj
+        obj[SW_KEY_DIMENSIONS]     = [ self._problem.dimN() ]
 
 
 
