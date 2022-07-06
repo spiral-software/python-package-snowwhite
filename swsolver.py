@@ -1,6 +1,7 @@
 
 from snowwhite import *
 import snowwhite as sw
+from snowwhite.metadata import *
 
 import datetime
 import subprocess
@@ -113,27 +114,18 @@ class SWSolver:
         
     def _buildMetadata(self):
         md = self._metadata
-        md[SW_KEY_BUILDINFO] = spiralBuildInfo()
+        md[SW_KEY_SPIRALBUILDINFO] = spiralBuildInfo()
         funcmeta = self._functionMetadata()
-        md[SW_KEY_TRANSFORMS] = [ funcmeta ]
+        if type(funcmeta) is dict:
+            md[SW_KEY_TRANSFORMS] = [ funcmeta ]
+            md[SW_KEY_TRANSFORMTYPES] = [ funcmeta.get(SW_KEY_TRANSFORMTYPE, SW_TRANSFORM_UNKNOWN) ]
     
     def _createMetadataFile(self, basename):
         """Write metadata source file."""
-        filename = basename + SW_METAFILE_PREFIX
-        try:
-            metadata_file = open(filename, 'w')
-        except:
-            print('Error: Could not open ' + filename + ' for writing')
-            return
-        print('char *' + basename + '_metadata = "' + SW_METADATA_START + '\\', file = metadata_file)  
+        varname  = basename + SW_METAVAR_EXT
+        filename = basename + SW_METAFILE_EXT
         self._buildMetadata()
-        metastr = json.dumps(self._metadata, sort_keys=True, indent=4)
-        metastr = metastr.replace('"', '\\"') + '\\'
-        metastr = metastr.replace('\n', '\\\n')
-        print(metastr, file = metadata_file) 
-        print(SW_METADATA_END + '";', file = metadata_file)  
-        metadata_file.close()
-    
+        writeMetadataSourceFile(self._metadata, varname, filename)    
         
     def _callSpiral(self, script):
         """Run SPIRAL with script as input."""

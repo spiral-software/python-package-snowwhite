@@ -6,7 +6,7 @@ import glob
 import os
 
 def metadataInFile(filename):
-    """extract metadata from file"""
+    """extract metadata from binary file"""
     bstr = bytes(SW_METADATA_START, 'utf-8')
     estr = bytes(SW_METADATA_END, 'utf-8')
     with open(filename, 'rb') as f:
@@ -31,4 +31,20 @@ def metadataInDir(path):
         if metaobj != None:
             metalist.append({'filename':filename, 'metadata':metaobj})
     return metalist
+
+
+def writeMetadataSourceFile(metadata, varname, path):
+    """Write metadata JSON as compileable C string"""
+    try:
+        metadata_file = open(path, 'w')
+    except:
+        print('Error: Could not open ' + path + ' for writing')
+        return
+    metastr = json.dumps(metadata, sort_keys=True, indent=4)
+    metastr = metastr.replace('"', '\\"') + '\\'
+    metastr = metastr.replace('\n', '\\\n')
+    print('char *' + varname + ' = "' + SW_METADATA_START + '\\', file = metadata_file)  
+    print(metastr, file = metadata_file) 
+    print(SW_METADATA_END + '";', file = metadata_file)  
+    metadata_file.close()
 
