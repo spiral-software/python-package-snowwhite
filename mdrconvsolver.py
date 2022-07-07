@@ -19,11 +19,10 @@ class MdrconvProblem(SWProblem):
         Arguments:
         n      -- dimension of input/output cube
         """
-        super(MdrconvProblem, self).__init__()
-        self._n = n
+        super(MdrconvProblem, self).__init__([n,n,n])
 
     def dimN(self):
-        return self._n
+        return self.dimensions()[0]
 
 
 class MdrconvSolver(SWSolver):

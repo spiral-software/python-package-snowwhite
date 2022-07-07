@@ -21,11 +21,10 @@ class StepPhaseProblem(SWProblem):
         Arguments:
         n     -- size of StepPhase cube
         """
-        super(StepPhaseProblem, self).__init__()
-        self._n = n
+        super(StepPhaseProblem, self).__init__([n,n,n])
         
     def dimN(self):
-        return self._n
+        return self.dimensions()[0]
         
 
 class StepPhaseSolver(SWSolver):

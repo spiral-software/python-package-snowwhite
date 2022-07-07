@@ -25,24 +25,15 @@ class MdprdftProblem(SWProblem):
     def __init__(self, ns, k=SW_FORWARD):
         """Setup problem specifics for MDPRDFT solver."""
         
-        super(MdprdftProblem, self).__init__()
-        self._ns = ns
-        self._k = k
+        super(MdprdftProblem, self).__init__(ns, k)
         # last dimension of complex component is smaller
         cxns = ns.copy()
         z = cxns.pop()
         cxns.append(z // 2 + 1)
         self._cxns = cxns
-        
-        
-    def dimensions(self):
-        return self._ns
-        
+
     def dimensionsCX(self):
         return self._cxns
-        
-    def direction(self):
-        return self._k
         
 
 class MdprdftSolver(SWSolver):

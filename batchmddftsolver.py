@@ -13,19 +13,16 @@ import random
 class BatchMddftProblem(SWProblem):
     """Define Batch MDDFT problem."""
 
-    def __init__(self, n, batchSz):
+    def __init__(self, n, batchSz, k=SW_FORWARD):
         """Setup problem specifics for Batch MDDFT solver.
         
         Arguments:
         n         -- dimension of 3D DFT Cube
         batchSz   -- batch size
+        k         -- direction
         """
-        super(BatchMddftProblem, self).__init__()
-        self._n = n
+        super(BatchMddftProblem, self).__init__([n,n,n], k)
         self._batchSz = batchSz
-        
-    def dimN(self):
-        return self._n
         
     def szBatch(self):
         return self._batchSz
@@ -106,7 +103,7 @@ class BatchMddftSolver(SWSolver):
         print('t := let(batch := ' + b + ',', file = script_file)
         print('    apat := When(true, APar, AVec),', file = script_file)
         print('    ns := ' + nnn + ',', file = script_file)
-        print('    k := -1,', file = script_file)
+        print('    k := ' + str(self._problem.direction() * -1) + ',', file = script_file)
         print('    name := "' + nameroot + '",', file = script_file)
         print('    TFCall(TRC(TTensorI(MDDFT(ns, k), batch, apat, apat)),', file = script_file)
         print('        rec(fname := name, params := []))', file = script_file)

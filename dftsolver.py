@@ -9,22 +9,15 @@ import random
 class DftProblem(SWProblem):
     """Define 1D DFT problem."""
 
-    def __init__(self, n, k=1):
+    def __init__(self, n, k=SW_FORWARD):
         """Setup problem specifics for 1D DFT solver.
         
         Arguments:
         n      -- dimension of 1D DFT
+        k      -- direction
         """
-        super(DftProblem, self).__init__()
-        self._n = n
-        self._k = k
-        
-    def dimN(self):
-        return self._n
-        
-    def direction(self):
-        return self._k
-        
+        super(DftProblem, self).__init__([n], k)
+
 
 class DftSolver(SWSolver):
     def __init__(self, problem: DftProblem, opts = {}):
@@ -34,7 +27,7 @@ class DftSolver(SWSolver):
         n = str(problem.dimN())
         c = '_'
         namebase = ''
-        if problem.direction() == 1:
+        if problem.direction() == SW_FORWARD:
             namebase = 'dft_fwd' + c + n
         else:
             namebase = 'dft_inv' + c + n
@@ -95,8 +88,7 @@ class DftSolver(SWSolver):
         
     def _setFunctionMetadata(self, obj):
         obj[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_DFT
-        obj[SW_KEY_DIMENSIONCOUNT] = 1
-        obj[SW_KEY_DIMENSIONS]     = [ self._problem.dimN() ]
+
 
 
 

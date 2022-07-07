@@ -27,8 +27,18 @@ import sys
 class SWProblem:
     """Base class for SnowWhite problem."""
     
-    def __init__(self):
-        pass
+    def __init__(self, dims, k=SW_FORWARD):
+        self._dims = dims
+        self._k = k
+        
+    def dimensions(self):
+        return self._dims
+
+    def dimN(self):
+        return self._dims[0]
+        
+    def direction(self):
+        return self._k
         
 
 class SWSolver:
@@ -120,6 +130,8 @@ class SWSolver:
         funcmeta[SW_KEY_DIRECTION]  = SW_STR_INVERSE if self._problem.direction() == SW_INVERSE else SW_STR_FORWARD
         funcmeta[SW_KEY_PRECISION] = SW_STR_SINGLE if self._opts.get(SW_OPT_REALCTYPE) == "float" else SW_STR_DOUBLE
         funcmeta[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_UNKNOWN
+        funcmeta[SW_KEY_DIMENSIONCOUNT] = len(self._problem.dimensions())
+        funcmeta[SW_KEY_DIMENSIONS] = self._problem.dimensions()
         names = dict()
         funcmeta[SW_KEY_NAMES] = names
         names[SW_KEY_EXEC] = self._namebase

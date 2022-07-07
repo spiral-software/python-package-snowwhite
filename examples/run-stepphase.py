@@ -21,7 +21,6 @@ if len(sys.argv) > 2:
 
 dims = [N,N,N]
 dimsTuple = tuple(dims)
-opts = { SW_OPT_REALCTYPE : c_type }
 
 ##  True or False for CUDA, HIP -- requires CuPy
 genCuda = True                  ##  set as default
@@ -36,6 +35,8 @@ if len ( sys.argv ) > 3:
     elif sys.argv[3] == "HIP" and (cp != None):
         platform = SW_HIP
         xp = cp
+
+opts = { SW_OPT_REALCTYPE : c_type, SW_OPT_PLATFORM : platform }
 
 src = np.ones(dimsTuple, dtype=src_type)
 for  k in range (np.size(src)):

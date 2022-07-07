@@ -17,16 +17,9 @@ class MddftProblem(SWProblem):
         
         Arguments:
         ns     -- dimensions of MDDFT
+        k      -- direction
         """
-        super(MddftProblem, self).__init__()
-        self._ns = ns
-        self._k = k
-        
-    def dimensions(self):
-        return self._ns
-        
-    def direction(self):
-        return self._k
+        super(MddftProblem, self).__init__(ns, k)
         
 
 class MddftSolver(SWSolver):
@@ -115,6 +108,4 @@ class MddftSolver(SWSolver):
         
     def _setFunctionMetadata(self, obj):
         obj[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_MDDFT
-        obj[SW_KEY_DIMENSIONCOUNT] = len(self._problem.dimensions())
-        obj[SW_KEY_DIMENSIONS] = self._problem.dimensions()
         
