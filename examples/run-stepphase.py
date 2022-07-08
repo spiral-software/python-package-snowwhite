@@ -23,18 +23,27 @@ dims = [N,N,N]
 dimsTuple = tuple(dims)
 
 ##  True or False for CUDA, HIP -- requires CuPy
-genCuda = True                  ##  set as default
+genCuda = False                  ##  set as default
 genHIP  = False
 
-xp = np
-platform = SW_CPU
+plat_arg = "CUDA"
+
 if len ( sys.argv ) > 3:
-    if sys.argv[3] == "CUDA" and (cp != None):
-        platform = SW_CUDA
-        xp = cp
-    elif sys.argv[3] == "HIP" and (cp != None):
-        platform = SW_HIP
-        xp = cp
+    plat_arg = sys.argv[3]
+else:
+    plat_arg = "CUDA"
+    
+if plat_arg == "CUDA" and (cp != None):
+    platform = SW_CUDA
+    genCuda = True
+    xp = cp
+elif sys.argv[3] == "HIP" and (cp != None):
+    platform = SW_HIP
+    genHIP = True
+    xp = cp
+else:
+    platform = SW_CPU
+    xp = np
 
 opts = { SW_OPT_REALCTYPE : c_type, SW_OPT_PLATFORM : platform }
 
