@@ -13,15 +13,15 @@ import random
 class BatchMddftProblem(SWProblem):
     """Define Batch MDDFT problem."""
 
-    def __init__(self, n, batchSz, k=SW_FORWARD):
+    def __init__(self, dims, batchSz, k=SW_FORWARD):
         """Setup problem specifics for Batch MDDFT solver.
         
         Arguments:
-        n         -- dimension of 3D DFT Cube
+        dims      -- dimensions of individual 3D DFT
         batchSz   -- batch size
-        k         -- direction
+        k         -- direction, defaulkt SW_FORWARD
         """
-        super(BatchMddftProblem, self).__init__([n,n,n], k)
+        super(BatchMddftProblem, self).__init__(dims, k)
         self._batchSz = batchSz
         
     def szBatch(self):
@@ -33,24 +33,26 @@ class BatchMddftSolver(SWSolver):
         if not isinstance(problem, BatchMddftProblem):
             raise TypeError("problem must be a BatchMddftProblem")
  
-        n = str(problem.dimN())
         b = str(problem.szBatch())
         typ = 'z'
         if opts.get(SW_OPT_REALCTYPE, 0) == 'float':
             typ = 'c'
-        namebase = typ + 'batch3ddft' + n + 'x' + b
+        ns = 'x'.join([str(n) for n in problem.dimensions()])
+        direc = '_fwd_' if problem.direction() == SW_FORWARD else '_inv_'
+        namebase = typ + 'batchmddft' + direc + ns + 'x' + b
         
         super(BatchMddftSolver, self).__init__(problem, namebase, opts)
 
     def runDef(self, src):
         """Solve using internal Python definition."""
         
-        n = self._problem.dimN()
+        dims = self._problem.dimensions()
         b = self._problem.szBatch()
+        dimsTuple = tuple([b]) + tuple(dims)
         
         xp = get_array_module(src)
         
-        out = xp.empty(shape=(b, n, n, n)).astype(complex)
+        out = xp.empty(dimsTuple).astype(complex)
         
         for i in range(b):
             dft = xp.fft.fftn(src[i,:,:,:]) 
@@ -60,15 +62,19 @@ class BatchMddftSolver(SWSolver):
     
        
     def buildTestInput(self):
-        n = self._problem.dimN()
+        dims = self._problem.dimensions()
         b = self._problem.szBatch()
-        
-        xp = cp if self._genCuda else np
+        dimsTuple = tuple([b]) + tuple(dims)
                
-        ret_Py = xp.random.rand(b, n, n, n).astype(complex)
-        ret_C = ret_Py.view(dtype=np.double)
+        src = np.ones(dimsTuple, complex)
+        for  k in range (np.size(src)):
+            vr = np.random.random()
+            vi = np.random.random()
+            src.itemset(k,vr + vi * 1j)
+        if self._genCuda or self._genHIP:    
+            src = cp.asarray(src)
         
-        return ret_Py, ret_C
+        return src
         
         
     def _trace(self):
@@ -79,9 +85,10 @@ class BatchMddftSolver(SWSolver):
         
         xp = get_array_module(src)
 
-        n = self._problem.dimN()
+        dims = self._problem.dimensions()
         b = self._problem.szBatch()
-        dst = xp.zeros((b*n**3 * 2), dtype=np.double)
+        dimsTuple = tuple([b]) + tuple(dims)
+        dst = xp.zeros(dimsTuple, dtype=np.complex128)
         self._func(dst, src)
         return dst
 
@@ -91,18 +98,14 @@ class BatchMddftSolver(SWSolver):
         filetype = '.c'
         if self._genCuda:
             filetype = '.cu'
-            
-        n = str(self._problem.dimN())
-        b = str(self._problem.szBatch())
-        nnn = '[' + n + ',' + n + ',' + n + ']'
-        
+                
         print('Load(fftx);', file = script_file)
         print('ImportAll(fftx);', file = script_file) 
         print('', file = script_file)
             
-        print('t := let(batch := ' + b + ',', file = script_file)
+        print('t := let(batch := ' + str(self._problem.szBatch()) + ',', file = script_file)
         print('    apat := When(true, APar, AVec),', file = script_file)
-        print('    ns := ' + nnn + ',', file = script_file)
+        print('    ns := ' + str(self._problem.dimensions()) + ',', file = script_file)
         print('    k := ' + str(self._problem.direction() * -1) + ',', file = script_file)
         print('    name := "' + nameroot + '",', file = script_file)
         print('    TFCall(TRC(TTensorI(MDDFT(ns, k), batch, apat, apat)),', file = script_file)

@@ -13,26 +13,17 @@ if len(sys.argv) > 1:
 if len(sys.argv) > 2:    
     b = int ( sys.argv[2] )
     
-p1 = BatchMddftProblem(n, b)
+p1 = BatchMddftProblem([n,n,n], b)
 
 s1 = BatchMddftSolver(p1, {SW_OPT_PLATFORM : SW_CUDA, 
     SW_OPT_KEEPTEMP : False, SW_OPT_PRINTRULETREE : True})
 
-input_data_Py, input_data_C = s1.buildTestInput()
+input_data = s1.buildTestInput()
 
-print('calling Python func \n')
-output_Py = s1.runDef(input_data_Py)
-# complex converted to interleaved for comparison with output_C
-output_Py_IL = output_Py.view(dtype=np.double).flatten()
-
-print('calling C func \n')
-output_C = s1.solve(input_data_C)
-
-print('length Py output: ', len(output_Py.flatten()), '| datatype: ', output_Py.dtype)
-print('length C output: ', len(output_C), '| datatype: ', output_C.dtype, '\n')
-
+output_Py = s1.runDef(input_data)
+output_C = s1.solve(input_data)
 
 xp = get_array_module(output_Py)
 
-diff = xp.max ( xp.absolute (  output_Py_IL - output_C))
-print ( 'Max Diff between Python/C = ' + str(diff) )
+diff = xp.max ( xp.absolute (  output_Py - output_C))
+print ( 'Diff between Python/C transforms = ' + str(diff) )

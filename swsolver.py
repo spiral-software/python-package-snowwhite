@@ -220,6 +220,9 @@ class SWSolver:
             self._createMetadataFile(basename)
         self._callCMake(basename)
         
+    def buildTestInput(self):
+        raise NotImplementedError()
+            
     def _trace(self):
         """Trace execution for generating Spiral script"""
         self._tracingOn = True
