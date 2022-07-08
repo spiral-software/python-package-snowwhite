@@ -42,7 +42,7 @@ class DftSolver(SWSolver):
         ##  a direct comparison we must scale the Python IFFT by the vector length
         ##  before comparing with the SPIRAL FFT
         N = self._problem.dimN()
-        if self._problem.direction() == 1:
+        if self._problem.direction() == SW_FORWARD:
             FFT = np.fft.fft ( src )
         else:
             FFT = np.fft.ifft ( src )                    ##  * N  ## (no scaling?)
@@ -76,10 +76,10 @@ class DftSolver(SWSolver):
         print("", file = script_file)
         print('nameroot := "' + self._namebase + '";', file = script_file)
         print("", file = script_file)
-        if self._problem.direction() == -1:
-            print('transform := Scale(1/n, DFT(n, ' + str ( self._problem.direction() * -1 ) + '));', file = script_file)
+        if self._problem.direction() == SW_INVERSE:
+            print('transform := Scale(1/n, DFT(n, ' + str (self._problem.direction()) + '));', file = script_file)
         else:
-            print('transform := DFT(n, ' + str ( self._problem.direction() * -1 ) + ');', file = script_file)
+            print('transform := DFT(n, ' + str (self._problem.direction()) + ');', file = script_file)
         print('ruletree  := RuleTreeMid(transform, opts);', file = script_file)
         print('code      := CodeRuleTree(ruletree, opts);', file = script_file)
         print('PrintTo("' + nameroot + filetype + '", PrintCode(nameroot, code, opts));', 

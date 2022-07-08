@@ -19,8 +19,10 @@ SW_OPT_PLATFORM         = 'platform'
 SW_OPT_PRINTRULETREE    = 'printruletree'
 SW_OPT_REALCTYPE        = 'realctype'
 
-SW_FORWARD  = 1
-SW_INVERSE  = -1
+# transform direction, 'k'
+
+SW_FORWARD  = -1
+SW_INVERSE  = 1
 
 # platforms
 

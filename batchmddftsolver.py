@@ -106,7 +106,7 @@ class BatchMddftSolver(SWSolver):
         print('t := let(batch := ' + str(self._problem.szBatch()) + ',', file = script_file)
         print('    apat := When(true, APar, AVec),', file = script_file)
         print('    ns := ' + str(self._problem.dimensions()) + ',', file = script_file)
-        print('    k := ' + str(self._problem.direction() * -1) + ',', file = script_file)
+        print('    k := ' + str(self._problem.direction()) + ',', file = script_file)
         print('    name := "' + nameroot + '",', file = script_file)
         print('    TFCall(TRC(TTensorI(MDDFT(ns, k), batch, apat, apat)),', file = script_file)
         print('        rec(fname := name, params := []))', file = script_file)

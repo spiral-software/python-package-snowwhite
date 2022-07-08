@@ -114,9 +114,9 @@ class MdprdftSolver(SWSolver):
         print('    name := "' + nameroot + '",', file = script_file)
         # -1 is inverse for Numpy and forward (1) for Spiral
         if self._colMajor:
-            print("    TFCall(TColMajor(" + xform + "(ns, " + str(self._problem.direction() * -1) + ")), rec(fname := name, params := []))", file = script_file)
+            print("    TFCall(TColMajor(" + xform + "(ns, " + str(self._problem.direction()) + ")), rec(fname := name, params := []))", file = script_file)
         else:
-            print("    TFCall(" + xform + "(ns, " + str(self._problem.direction() * -1) + "), rec(fname := name, params := []))", file = script_file)
+            print("    TFCall(" + xform + "(ns, " + str(self._problem.direction()) + "), rec(fname := name, params := []))", file = script_file)
         print(");", file = script_file)        
 
         print("opts := conf.getOpts(t);", file = script_file)
