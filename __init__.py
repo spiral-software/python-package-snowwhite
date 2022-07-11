@@ -1,6 +1,7 @@
 
 from .spiral import *
 
+import sys
 import numpy as _numpy
 
 try:
@@ -60,6 +61,11 @@ SW_KEY_SPIRALBUILDINFO  = 'SpiralBuildInfo'
 SW_KEY_TRANSFORMS       = 'Transforms'
 SW_KEY_TRANSFORMTYPE    = 'TransformType'
 SW_KEY_TRANSFORMTYPES   = 'TransformTypes'
+
+if sys.platform == 'win32':
+    SW_SHLIB_EXT = '.dll'
+else:
+    SW_SHLIB_EXT = '.so'
 
 
 

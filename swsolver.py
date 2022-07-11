@@ -73,11 +73,8 @@ class SWSolver:
             self._namebase = namebase + '_hip'
         else:
             self._namebase = namebase
-        if sys.platform == 'win32':
-            libext = '.dll'
-        else:
-            libext = '.so'
-        sharedLibFullPath = os.path.join(self._libsDir, 'lib' + self._namebase + libext)         
+
+        sharedLibFullPath = os.path.join(self._libsDir, 'lib' + self._namebase + SW_SHLIB_EXT)         
 
         if not os.path.exists(sharedLibFullPath):
             self._setupCFuncs(self._namebase)

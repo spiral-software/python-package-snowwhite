@@ -1,4 +1,4 @@
-'''Print meta data in dll files in .libs directory
+'''Print meta data in shared library files in .libs directory
 
 script expects to be in examples directory in order to find .libs
 '''

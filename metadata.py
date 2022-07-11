@@ -24,7 +24,7 @@ def metadataInFile(filename):
 def metadataInDir(path):
     """Assemble metadata (if any) from shared library files in directory"""
     metalist = []
-    filepat = os.path.join(path, '*.dll')
+    filepat = os.path.join(path, '*' + SW_SHLIB_EXT)
     files = glob.glob(filepat)
     for filename in files:
         metaobj = metadataInFile(filename)

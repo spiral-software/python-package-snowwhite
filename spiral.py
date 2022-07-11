@@ -13,18 +13,20 @@ SPIRAL_KEY_GITREMOTE        =  'GitRemote'
 SPIRAL_KEY_SYSTEM           =  'System'
 SPIRAL_KEY_VERSION          =  'Version'
 
+if sys.platform == 'win32':
+    SPIRAL_EXE = 'spiral.bat'
+else:
+    SPIRAL_EXE = 'spiral'
+
 
 def spiralBuildInfo():
-    if sys.platform == 'win32':
-        spiralexe = 'spiral.bat'
-    else:
-        spiralexe = 'spiral'
+    
 
     # -B option signals Spiral to print build info and exit early in startup
     # use BuildInfo() and quit commands for older Spiral version w/o -B option
     fallthroughstr = b'BuildInfo();\nquit;\n'
     try:
-        res = subprocess.run([spiralexe, '-B'], capture_output=True, input=fallthroughstr)
+        res = subprocess.run([SPIRAL_EXE, '-B'], capture_output=True, input=fallthroughstr)
     except:
         return dict()
     bdl = res.stdout.split(b'\n')
