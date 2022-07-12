@@ -20,13 +20,11 @@ else:
 
 
 def spiralBuildInfo():
-    
-
     # -B option signals Spiral to print build info and exit early in startup
     # use BuildInfo() and quit commands for older Spiral version w/o -B option
     fallthroughstr = b'BuildInfo();\nquit;\n'
     try:
-        res = subprocess.run([SPIRAL_EXE, '-B'], capture_output=True, input=fallthroughstr)
+        res = subprocess.run([SPIRAL_EXE, '-B'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, input=fallthroughstr)
     except:
         return dict()
     bdl = res.stdout.split(b'\n')
