@@ -39,6 +39,7 @@ def spiralBuildInfo():
 
 
 def callSpiralWithFile(filename):
-    runResult = subprocess.run([SPIRAL_EXE,'<', filename], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    with open(filename, 'r') as f:
+        runResult = subprocess.run(SPIRAL_EXE, stdin=f, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return runResult
 
