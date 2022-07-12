@@ -101,7 +101,6 @@ class SWSolver:
         raise NotImplementedError()
     
     def _genScript(self, filename : str):
-        print("Tracing Python description to generate SPIRAL script");
         self._trace()
         try:
             script_file = open(filename, 'w')
@@ -143,29 +142,23 @@ class SWSolver:
         filename = basename + SW_METAFILE_EXT
         self._buildMetadata()
         writeMetadataSourceFile(self._metadata, varname, filename)    
-        
+
     def _callSpiral(self, script):
         """Run SPIRAL with script as input."""
         if self._genCuda:
-            print ( 'Generating CUDA code', flush = True )
+            print ( 'Generating CUDA', flush = True )
         elif self._genHIP:
-            print ( 'Generating HIP code', flush = True )
+            print ( 'Generating HIP', flush = True )
         else:
-            print ( 'Generating C code' )
-        if sys.platform == 'win32':
-            spiralexe = self._spiralname + '.bat'
-            self._runResult = subprocess.run([spiralexe,'<',script], shell=True, capture_output=True)
-        else:
-            spiralexe = self._spiralname
-            cmd = spiralexe + ' < ' + script
-            self._runResult = subprocess.run(cmd, shell=True)
+            print ( 'Generating C', flush = True )
+        self._runResult = callSpiralWithFile(script)
 
     def _callCMake (self, basename):
         ##  create a temporary work directory in which to run cmake
         ##  Assumes:  SPIRAL_HOME is defined (environment variable) or override on command line
         ##  FILEROOT = basename;
         
-        print("Compiling and linking C code");
+        print("Compiling and linking");
         
         cwd = os.getcwd()
         
@@ -197,12 +190,10 @@ class SWSolver:
         if sys.platform == 'win32':
             ##  NOTE: Ensure Python installed on Windows is 64 bit
             cmd += ' .. && cmake --build . --config Release --target install'
-            print ( cmd )
-            self._runResult = subprocess.run (cmd, shell=True, capture_output=False)
         else:
             cmd += ' .. && make install'
-            print ( cmd )
-            self._runResult = subprocess.run(cmd, shell=True)
+            
+        self._runResult = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         os.chdir(cwd)
 
