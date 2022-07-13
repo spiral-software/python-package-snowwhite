@@ -53,7 +53,6 @@ class SWSolver:
         self._keeptemp = self._opts.get(SW_OPT_KEEPTEMP, False)
         self._withMPI = self._opts.get(SW_OPT_MPI, False)
         self._printRuleTree = self._opts.get(SW_OPT_PRINTRULETREE, False)
-        self._runResult = None
         self._tracingOn = False
         self._callGraph = []
         self._SharedLibAccess = None
@@ -151,7 +150,7 @@ class SWSolver:
             print ( 'Generating HIP', flush = True )
         else:
             print ( 'Generating C', flush = True )
-        self._runResult = callSpiralWithFile(script)
+        return callSpiralWithFile(script)
 
     def _callCMake (self, basename):
         ##  create a temporary work directory in which to run cmake
@@ -193,20 +192,23 @@ class SWSolver:
         else:
             cmd += ' .. && make install'
             
-        self._runResult = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
+        runResult = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         os.chdir(cwd)
-
-        if self._runResult.returncode == 0 and not self._keeptemp:
+        if runResult.returncode != 0:
+            print(runResult.stderr.decode())
+        elif not self._keeptemp:
             shutil.rmtree(tempdir, ignore_errors=True)
+        return runResult.returncode
             
     def _setupCFuncs(self, basename):
         script = basename + ".g"
         self._genScript(script)
-        self._callSpiral(script)
+        ret = self._callSpiral(script)
+        if ret != SPIRAL_RET_OK:
+            return 1
         if self._includeMetadata:
             self._createMetadataFile(basename)
-        self._callCMake(basename)
+        return self._callCMake(basename)
         
     def buildTestInput(self):
         raise NotImplementedError()

@@ -118,10 +118,8 @@ class StepPhaseSolver(SWSolver):
         filetype = '.c'
         if self._genCuda:
             filetype = '.cu'
-            print ( '_writeScript: namebase = ' + filename + ', nameroot = ' + nameroot, flush = True ) 
         if self._genHIP:
             filetype = '.cpp'
-            print ( '_writeScript: namebase = ' + filename + ', nameroot = ' + nameroot, flush = True ) 
 
         print('Load(fftx);', file = script_file)
         print('ImportAll(fftx);', file = script_file) 

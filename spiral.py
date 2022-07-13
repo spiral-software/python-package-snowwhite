@@ -13,6 +13,9 @@ SPIRAL_KEY_GITREMOTE        =  'GitRemote'
 SPIRAL_KEY_SYSTEM           =  'System'
 SPIRAL_KEY_VERSION          =  'Version'
 
+SPIRAL_RET_OK   = 0
+SPIRAL_RET_ERR  = 1
+
 if sys.platform == 'win32':
     SPIRAL_EXE = 'spiral.bat'
 else:
@@ -39,7 +42,17 @@ def spiralBuildInfo():
 
 
 def callSpiralWithFile(filename):
-    with open(filename, 'r') as f:
-        runResult = subprocess.run(SPIRAL_EXE, stdin=f, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    return runResult
+    try:
+        with open(filename, 'r') as f:
+            runResult = subprocess.run(SPIRAL_EXE, stdin=f, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            err = runResult.stderr.decode()
+            if len(err) > 10:
+                print(err)
+                return SPIRAL_RET_ERR
+            return SPIRAL_RET_OK if runResult.returncode == 0 else SPIRAL_RET_ERR
+    except OSError as ex:
+        print(ex.strerror)
+    except:
+        pass
+    return SPIRAL_RET_ERR
 

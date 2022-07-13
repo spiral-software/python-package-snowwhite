@@ -37,7 +37,7 @@ if plat_arg == "CUDA" and (cp != None):
     platform = SW_CUDA
     genCuda = True
     xp = cp
-elif sys.argv[3] == "HIP" and (cp != None):
+elif plat_arg == "HIP" and (cp != None):
     platform = SW_HIP
     genHIP = True
     xp = cp
