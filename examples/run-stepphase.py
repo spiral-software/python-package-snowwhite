@@ -19,15 +19,6 @@ if len(sys.argv) > 2:
         c_type = 'float'
         src_type = np.single
 
-dims = [N,N,N]
-dimsTuple = tuple(dims)
-
-##  True or False for CUDA, HIP -- requires CuPy
-genCuda = False                  ##  set as default
-genHIP  = False
-
-plat_arg = "CUDA"
-
 if len ( sys.argv ) > 3:
     plat_arg = sys.argv[3]
 else:
@@ -35,30 +26,34 @@ else:
     
 if plat_arg == "CUDA" and (cp != None):
     platform = SW_CUDA
-    genCuda = True
+    forGPU = True
     xp = cp
 elif plat_arg == "HIP" and (cp != None):
     platform = SW_HIP
-    genHIP = True
+    forGPU = True
     xp = cp
 else:
     platform = SW_CPU
+    forGPU = False 
     xp = np
 
-opts = { SW_OPT_REALCTYPE : c_type, SW_OPT_PLATFORM : platform }
+dims = [N,N,N]
+dimsTuple = tuple(dims)
 
 src = np.ones(dimsTuple, dtype=src_type)
 for  k in range (np.size(src)):
     src.itemset(k,np.random.random()*10.0)
 
-if genCuda or genHIP:
+if forGPU:
     src = cp.asarray(src) 
 
-tmp = xp.fft.rfftn(src)
-amplitudes = xp.absolute ( tmp )  ##  xp.fft.rfftn(src))
+opts = { SW_OPT_REALCTYPE : c_type, SW_OPT_PLATFORM : platform }
 
 p1 = StepPhaseProblem(N)
 s1 = StepPhaseSolver(p1, opts)
+
+tmp = xp.fft.rfftn(src)
+amplitudes = xp.absolute(tmp)
 
 dstP = s1.runDef(src, amplitudes)
 dstC = s1.solve(src, amplitudes)
