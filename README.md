@@ -13,13 +13,14 @@ See the ```examples``` directory to learn more.
 
 ## Prerequisites
 
-Besides a current version of **Python3** and NumPy, SnowWhite needs the following:
-
+- **Python3** (3.7 or higher)
+	- **NumPy**
+	- **CuPy** (optional, but needed if targeting GPU's)
 - **SPIRAL** (available on GitHub)
 	- **spiral-software** https://www.github.com/spiral-software/spiral-software
 	- **spiral-package-fftx** https://www.github.com/spiral-software/spiral-package-fftx
 	- **spiral-package-simt** https://www.github.com/spiral-software/spiral-package-simt
-- **CMake** (3.14 or higher is required)
+- **CMake** (3.14 or higher)
 - **C Compiler**
 
 With SPIRAL installed you will have CMake, a compatible C compiler, and Python3 for SnowWhite.  SPIRAL builds on Linux/Unix with **gcc** and **make**, on Windows it builds with **Visual Studio**.  For macOS SPIRAL requires version 10.14 (Mojave) or later of macOS, with a compatible version of **Xcode** and

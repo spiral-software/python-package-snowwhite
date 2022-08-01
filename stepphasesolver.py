@@ -1,5 +1,6 @@
 
 from snowwhite import *
+from snowwhite.swsolver import *
 import numpy as np
 
 try:
@@ -20,17 +21,16 @@ class StepPhaseProblem(SWProblem):
         Arguments:
         n     -- size of StepPhase cube
         """
-        super(StepPhaseProblem, self).__init__()
-        self._n = n
+        super(StepPhaseProblem, self).__init__([n,n,n])
         
     def dimN(self):
-        return self._n
+        return self.dimensions()[0]
         
 
 class StepPhaseSolver(SWSolver):
-    def __init__(self, problem: StepPhaseProblem, opts = {SW_OPT_CUDA : False, SW_OPT_HIP : False}):
+    def __init__(self, problem: StepPhaseProblem, opts = {}):
         if not isinstance(problem, StepPhaseProblem):
-            raise TypeError("problem must be an StepPhaseProblem")
+            raise TypeError("problem must be a StepPhaseProblem")
         
         if opts.get(SW_OPT_REALCTYPE, 0) == 'float':
             typ = 'c'
@@ -40,7 +40,7 @@ class StepPhaseSolver(SWSolver):
             self._ctype = 'double'
              
         namebase = typ + 'stepphase_' + str(problem.dimN())
-        ##  print ( 'StepPhaseSolver: namebase = ' + namebase, flush = True )
+
         super(StepPhaseSolver, self).__init__(problem, namebase, opts)
 
     def runDef(self, rho, amplitudes):
@@ -118,10 +118,8 @@ class StepPhaseSolver(SWSolver):
         filetype = '.c'
         if self._genCuda:
             filetype = '.cu'
-            print ( '_writeScript: namebase = ' + filename + ', nameroot = ' + nameroot, flush = True ) 
         if self._genHIP:
             filetype = '.cpp'
-            print ( '_writeScript: namebase = ' + filename + ', nameroot = ' + nameroot, flush = True ) 
 
         print('Load(fftx);', file = script_file)
         print('ImportAll(fftx);', file = script_file) 

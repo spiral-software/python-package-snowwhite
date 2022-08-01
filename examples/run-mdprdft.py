@@ -35,7 +35,10 @@ dims = [N,N,N]
 # True of False for CUDA, CUDA requires CuPy
 genCuda = True
 genCuda = genCuda and (cp != None)
-opts = {SW_OPT_CUDA : genCuda, SW_OPT_REALCTYPE : base_type}
+
+platform = SW_CUDA if genCuda else SW_CPU
+
+opts = {SW_OPT_PLATFORM : platform, SW_OPT_REALCTYPE : base_type}
 
 
 p1 = MdprdftProblem(dims, k)

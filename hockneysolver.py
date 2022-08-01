@@ -1,5 +1,6 @@
 
 from snowwhite import *
+from snowwhite.swsolver import *
 import numpy as np
 import ctypes
 import sys
@@ -15,13 +16,9 @@ class HockneyProblem(SWProblem):
         ns     -- dimension of input cube
         nd     -- dimension of output cube
         """
-        super(HockneyProblem, self).__init__()
-        self._n = n
+        super(HockneyProblem, self).__init__([n,n,n])
         self._ns = ns
         self._nd = nd
-
-    def dimN(self):
-        return self._n
         
     def dimNS(self):
         return self._ns

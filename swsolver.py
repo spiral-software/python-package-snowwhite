@@ -1,10 +1,13 @@
 
+from snowwhite import *
 import snowwhite as sw
+from snowwhite.metadata import *
 
 import datetime
 import subprocess
 import os
 import sys
+import json
 
 import tempfile
 import shutil
@@ -19,22 +22,23 @@ except ModuleNotFoundError:
 import ctypes
 import sys
 
-SW_OPT_COLMAJOR         = 'colmajor'
-SW_OPT_CUDA             = 'cuda'
-SW_OPT_HIP              = 'hip'
-SW_OPT_KEEPTEMP         = 'keeptemp'
-SW_OPT_MPI              = 'mpi'
-SW_OPT_PRINTRULETREE    = 'printruletree'
-SW_OPT_REALCTYPE        = 'realctype'
 
-SW_FORWARD  = 1
-SW_INVERSE  = -1
 
 class SWProblem:
     """Base class for SnowWhite problem."""
     
-    def __init__(self):
-        pass
+    def __init__(self, dims, k=SW_FORWARD):
+        self._dims = dims
+        self._k = k
+        
+    def dimensions(self):
+        return self._dims
+
+    def dimN(self):
+        return self._dims[0]
+        
+    def direction(self):
+        return self._k
         
 
 class SWSolver:
@@ -44,17 +48,18 @@ class SWSolver:
         self._problem = problem
         self._opts = opts
         self._colMajor = self._opts.get(SW_OPT_COLMAJOR, False)
-        self._genHIP = self._opts.get(SW_OPT_HIP, False)
-        self._genCuda = self._opts.get(SW_OPT_CUDA, False)
+        self._genHIP = (self._opts.get(SW_OPT_PLATFORM, SW_CPU) == SW_HIP)
+        self._genCuda = (self._opts.get(SW_OPT_PLATFORM, SW_CPU) == SW_CUDA)
         self._keeptemp = self._opts.get(SW_OPT_KEEPTEMP, False)
         self._withMPI = self._opts.get(SW_OPT_MPI, False)
         self._printRuleTree = self._opts.get(SW_OPT_PRINTRULETREE, False)
-        self._runResult = None
         self._tracingOn = False
         self._callGraph = []
         self._SharedLibAccess = None
         self._MainFunc = None
         self._spiralname = 'spiral'
+        self._metadata = dict()
+        self._includeMetadata = self._opts.get(SW_OPT_METADATA, False)
         
         # find and possibly create the subdirectory of temp dirs
         moduleDir = os.path.dirname(os.path.realpath(__file__))
@@ -67,11 +72,8 @@ class SWSolver:
             self._namebase = namebase + '_hip'
         else:
             self._namebase = namebase
-        if sys.platform == 'win32':
-            libext = '.dll'
-        else:
-            libext = '.so'
-        sharedLibFullPath = os.path.join(self._libsDir, 'lib' + self._namebase + libext)         
+
+        sharedLibFullPath = os.path.join(self._libsDir, 'lib' + self._namebase + SW_SHLIB_EXT)         
 
         if not os.path.exists(sharedLibFullPath):
             self._setupCFuncs(self._namebase)
@@ -98,7 +100,6 @@ class SWSolver:
         raise NotImplementedError()
     
     def _genScript(self, filename : str):
-        print("Tracing Python description to generate SPIRAL script");
         self._trace()
         try:
             script_file = open(filename, 'w')
@@ -113,28 +114,50 @@ class SWSolver:
         self._writeScript(script_file)
         script_file.close()
         
+    def _setFunctionMetadata(self, obj):
+        pass
+        
+    def _buildMetadata(self):
+        md = self._metadata
+        md[SW_KEY_SPIRALBUILDINFO] = spiralBuildInfo()
+        funcmeta = dict()
+        md[SW_KEY_TRANSFORMS] = [ funcmeta ]
+        funcmeta[SW_KEY_DIRECTION]  = SW_STR_INVERSE if self._problem.direction() == SW_INVERSE else SW_STR_FORWARD
+        funcmeta[SW_KEY_PRECISION] = SW_STR_SINGLE if self._opts.get(SW_OPT_REALCTYPE) == "float" else SW_STR_DOUBLE
+        funcmeta[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_UNKNOWN
+        funcmeta[SW_KEY_DIMENSIONCOUNT] = len(self._problem.dimensions())
+        funcmeta[SW_KEY_DIMENSIONS] = self._problem.dimensions()
+        names = dict()
+        funcmeta[SW_KEY_NAMES] = names
+        names[SW_KEY_EXEC] = self._namebase
+        names[SW_KEY_INIT] = 'init_' + self._namebase
+        names[SW_KEY_DESTROY] = 'destroy_' + self._namebase
+        self._setFunctionMetadata(funcmeta)
+        md[SW_KEY_TRANSFORMTYPES] = [ funcmeta.get(SW_KEY_TRANSFORMTYPE) ]
+    
+    def _createMetadataFile(self, basename):
+        """Write metadata source file."""
+        varname  = basename + SW_METAVAR_EXT
+        filename = basename + SW_METAFILE_EXT
+        self._buildMetadata()
+        writeMetadataSourceFile(self._metadata, varname, filename)    
+
     def _callSpiral(self, script):
         """Run SPIRAL with script as input."""
         if self._genCuda:
-            print ( 'Generating CUDA code', flush = True )
+            print ( 'Generating CUDA', flush = True )
         elif self._genHIP:
-            print ( 'Generating HIP code', flush = True )
+            print ( 'Generating HIP', flush = True )
         else:
-            print ( 'Generating C code' )
-        if sys.platform == 'win32':
-            spiralexe = self._spiralname + '.bat'
-            self._runResult = subprocess.run([spiralexe,'<',script], shell=True, capture_output=True)
-        else:
-            spiralexe = self._spiralname
-            cmd = spiralexe + ' < ' + script
-            self._runResult = subprocess.run(cmd, shell=True)
+            print ( 'Generating C', flush = True )
+        return callSpiralWithFile(script)
 
     def _callCMake (self, basename):
         ##  create a temporary work directory in which to run cmake
         ##  Assumes:  SPIRAL_HOME is defined (environment variable) or override on command line
         ##  FILEROOT = basename;
         
-        print("Compiling and linking C code");
+        print("Compiling and linking");
         
         cwd = os.getcwd()
         
@@ -148,45 +171,48 @@ class SWSolver:
         os.chdir(tempdir)
 
         cmake_defroot = '-DFILEROOT:STRING=' + basename
+        
+        cmd = 'cmake ' + cmake_defroot
+        if self._genCuda:
+            cmd += ' -DHASCUDA=1'
+        elif self._genHIP:
+            cmd += ' -DHASHIP=1 -DCMAKE_CXX_COMPILER=hipcc'    
+            
+        if self._withMPI:
+            cmd += ' -DHASMPI=1'
+            
+        if self._includeMetadata:
+            cmd += ' -DHAS_METADATA=1'
+
+        cmd += ' -DPY_LIBS_DIR=' + self._libsDir
+        
         if sys.platform == 'win32':
             ##  NOTE: Ensure Python installed on Windows is 64 bit
-            cmd = 'cmake ' + cmake_defroot
-            if self._genCuda:
-                cmd += ' -DHASCUDA=1'
-            if self._withMPI:
-                cmd += ' -DHASMPI=1'
-            if self._genHIP:
-                cmd += ' -DHASHIP=1 -DCMAKE_CXX_COMPILER=hipcc'
-
-            cmd += ' -DPY_LIBS_DIR=' + self._libsDir
             cmd += ' .. && cmake --build . --config Release --target install'
-            print ( cmd )
-            self._runResult = subprocess.run (cmd, shell=True, capture_output=False)
         else:
-            cmd = 'cmake ' + cmake_defroot
-            if self._genCuda:
-                cmd += ' -DHASCUDA=1'
-            if self._withMPI:
-                cmd += ' -DHASMPI=1'
-            if self._genHIP:
-                cmd += ' -DHASHIP=1 -DCMAKE_CXX_COMPILER=hipcc'
-
-            cmd += ' -DPY_LIBS_DIR=' + self._libsDir
             cmd += ' .. && make install'
-            print ( cmd )
-            self._runResult = subprocess.run(cmd, shell=True)
-
+            
+        runResult = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         os.chdir(cwd)
-
-        if self._runResult.returncode == 0 and not self._keeptemp:
+        if runResult.returncode != 0:
+            print(runResult.stderr.decode())
+        elif not self._keeptemp:
             shutil.rmtree(tempdir, ignore_errors=True)
+        return runResult.returncode
             
     def _setupCFuncs(self, basename):
         script = basename + ".g"
         self._genScript(script)
-        self._callSpiral(script)
-        self._callCMake(basename)
+        ret = self._callSpiral(script)
+        if ret != SPIRAL_RET_OK:
+            return 1
+        if self._includeMetadata:
+            self._createMetadataFile(basename)
+        return self._callCMake(basename)
         
+    def buildTestInput(self):
+        raise NotImplementedError()
+            
     def _trace(self):
         """Trace execution for generating Spiral script"""
         self._tracingOn = True
@@ -241,7 +267,8 @@ class SWSolver:
             raise RuntimeError(msg)
 
     def embedCube(self, N, src, Ns):
-        retCube = np.zeros(shape=(N, N, N))
+        xp = sw.get_array_module(src)
+        retCube = xp.zeros(shape=(N, N, N))
         for k in range(Ns):
             for j in range(Ns):
                 for i in range(Ns):
@@ -256,7 +283,8 @@ class SWSolver:
 		        
     def rfftn(self, x):
         """ forward multi-dimensional real DFT """
-        ret = np.fft.rfftn(x) # executes z, then y, then x
+        xp = sw.get_array_module(x)
+        ret = xp.fft.rfftn(x) # executes z, then y, then x
         if self._tracingOn:
             N = x.shape[0]
             nnn = '[' + str(N) + ',' + str(N) + ',' + str(N) + ']'
@@ -266,16 +294,18 @@ class SWSolver:
 
     def pointwise(self, x, y):
         """ pointwise array multiplication """
+        xp = sw.get_array_module(x)
         ret = x * y
         if self._tracingOn:
-            nElems = np.size(x) * 2
+            nElems = xp.size(x) * 2
             st = 'RCDiag(FDataOfs(symvar, ' + str(nElems) + ', 0))'
             self._callGraph.insert(0, st)
         return ret
 
     def irfftn(self, x, shape):
         """ inverse multi-dimensional real DFT """
-        ret = np.fft.irfftn(x, s=shape) # executes x, then y, then z
+        xp = sw.get_array_module(x)
+        ret = xp.fft.irfftn(x, s=shape) # executes x, then y, then z
         if self._tracingOn:
             N = x.shape[0]
             nnn = '[' + str(N) + ',' + str(N) + ',' + str(N) + ']'

@@ -1,7 +1,7 @@
 #! python
 
 import sys
-from snowwhite.mddftsolver import *
+from snowwhite.mdrconvsolver import *
 import numpy as np
 try:
     import cupy as cp
@@ -40,29 +40,17 @@ else:
 
 opts = { SW_OPT_REALCTYPE : c_type, SW_OPT_PLATFORM : platform }
 
-dims = [N,N,N]        
-dimsTuple = tuple(dims)
-
-# direction, SW_FORWARD or SW_INVERSE
-k = SW_FORWARD
-   
-p1 = MddftProblem(dims, k)
-s1 = MddftSolver(p1, opts)
-
-src = np.ones(dimsTuple, complex)
-for  k in range (np.size(src)):
-    vr = np.random.random()
-    vi = np.random.random()
-    src.itemset(k,vr + vi * 1j)
-
 xp = np
-if forGPU:    
-    src = cp.asarray(src)
+if forGPU:
     xp = cp
 
-dstP = s1.runDef(src)
-dstC = s1.solve(src)
+p1 = MdrconvProblem(N)
+s1 = MdrconvSolver(p1, opts)
 
-diff = xp.max ( xp.absolute ( dstC - dstP ) )
+(input_data, symbol) = s1.buildTestInput()
 
-print ('Diff between Python/C transforms = ' + str(diff) )
+output_Py = s1.runDef(input_data, symbol)
+output_C = s1.scale(s1.solve(input_data, symbol))
+
+diff = np.max ( np.absolute (  output_Py - output_C ))
+print ( 'Max Diff between Python/C = ' + str(diff) )

@@ -1,5 +1,6 @@
 
 from snowwhite import *
+from snowwhite.swsolver import *
 import numpy as np
 
 try:
@@ -16,16 +17,9 @@ class MddftProblem(SWProblem):
         
         Arguments:
         ns     -- dimensions of MDDFT
+        k      -- direction
         """
-        super(MddftProblem, self).__init__()
-        self._ns = ns
-        self._k = k
-        
-    def dimensions(self):
-        return self._ns
-        
-    def direction(self):
-        return self._k
+        super(MddftProblem, self).__init__(ns, k)
         
 
 class MddftSolver(SWSolver):
@@ -45,6 +39,8 @@ class MddftSolver(SWSolver):
         
         if opts.get(SW_OPT_COLMAJOR, False):
             namebase = namebase + '_F'
+            
+        opts[SW_OPT_METADATA] = True
                     
         super(MddftSolver, self).__init__(problem, namebase, opts)
 
@@ -94,9 +90,9 @@ class MddftSolver(SWSolver):
         print('    name := "' + nameroot + '",', file = script_file)
         # -1 is inverse for Numpy and forward (1) for Spiral
         if self._colMajor:
-            print("    TFCall(TRC(TColMajor(MDDFT(ns, " + str(self._problem.direction() * -1) + "))), rec(fname := name, params := []))", file = script_file)
+            print("    TFCall(TRC(TColMajor(MDDFT(ns, " + str(self._problem.direction()) + "))), rec(fname := name, params := []))", file = script_file)
         else:
-            print("    TFCall(TRC(MDDFT(ns, " + str(self._problem.direction() * -1) + ")), rec(fname := name, params := []))", file = script_file)
+            print("    TFCall(TRC(MDDFT(ns, " + str(self._problem.direction()) + ")), rec(fname := name, params := []))", file = script_file)
         print(");", file = script_file)        
 
         print("opts := conf.getOpts(t);", file = script_file)
@@ -109,4 +105,7 @@ class MddftSolver(SWSolver):
         print("c := opts.fftxGen(tt);", file = script_file)
         print('PrintTo("' + filename + filetype + '", opts.prettyPrint(c));', file = script_file)
         print("", file = script_file)
+        
+    def _setFunctionMetadata(self, obj):
+        obj[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_MDDFT
         

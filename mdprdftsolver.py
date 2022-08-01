@@ -4,6 +4,7 @@ MDPRDFT Module
 
 
 from snowwhite import *
+from snowwhite.swsolver import *
 import numpy as np
 
 try:
@@ -24,24 +25,15 @@ class MdprdftProblem(SWProblem):
     def __init__(self, ns, k=SW_FORWARD):
         """Setup problem specifics for MDPRDFT solver."""
         
-        super(MdprdftProblem, self).__init__()
-        self._ns = ns
-        self._k = k
+        super(MdprdftProblem, self).__init__(ns, k)
         # last dimension of complex component is smaller
         cxns = ns.copy()
         z = cxns.pop()
         cxns.append(z // 2 + 1)
         self._cxns = cxns
-        
-        
-    def dimensions(self):
-        return self._ns
-        
+
     def dimensionsCX(self):
         return self._cxns
-        
-    def direction(self):
-        return self._k
         
 
 class MdprdftSolver(SWSolver):
@@ -122,9 +114,9 @@ class MdprdftSolver(SWSolver):
         print('    name := "' + nameroot + '",', file = script_file)
         # -1 is inverse for Numpy and forward (1) for Spiral
         if self._colMajor:
-            print("    TFCall(TColMajor(" + xform + "(ns, " + str(self._problem.direction() * -1) + ")), rec(fname := name, params := []))", file = script_file)
+            print("    TFCall(TColMajor(" + xform + "(ns, " + str(self._problem.direction()) + ")), rec(fname := name, params := []))", file = script_file)
         else:
-            print("    TFCall(" + xform + "(ns, " + str(self._problem.direction() * -1) + "), rec(fname := name, params := []))", file = script_file)
+            print("    TFCall(" + xform + "(ns, " + str(self._problem.direction()) + "), rec(fname := name, params := []))", file = script_file)
         print(");", file = script_file)        
 
         print("opts := conf.getOpts(t);", file = script_file)

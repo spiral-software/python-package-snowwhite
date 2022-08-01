@@ -10,20 +10,20 @@ if len(sys.argv) < 3:
 
 n = int ( sys.argv[1] )
 if sys.argv[2] == "F" or sys.argv[2] == "f":
-    fwd = 1                      ##  standard python transform: 1 ==> forward, -1 reverse
+    k = SW_FORWARD
 else:
-    fwd = -1
+    k = SW_INVERSE
     
-p1 = DftProblem(n, fwd)
+p1 = DftProblem(n, k)
 s1 = DftSolver(p1)
 
 
 src = np.zeros(n).astype(complex)
 
-for k in range (n):
+for i in range (n):
     vr = np.random.random()
     vi = np.random.random()
-    src[k] = vr + vi * 1j
+    src[i] = vr + vi * 1j
         
 resP = s1.runDef(src)
 resC = s1.solve(src)
