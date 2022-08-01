@@ -1,5 +1,6 @@
 #! python
 
+import sys
 from snowwhite.mddftsolver import *
 import numpy as np
 try:
@@ -8,13 +9,39 @@ except ModuleNotFoundError:
     cp = None
 import sys
 
-dims = [32,32,32]
-dimsTuple = tuple(dims)
+N = 32
+if len(sys.argv) > 1:
+    N = int ( sys.argv[1] )
 
-# True of False for CUDA, CUDA requires CuPy
-genCuda = True
-genCuda = genCuda and (cp != None)
-opts = {SW_OPT_PLATFORM : SW_CUDA if genCuda else SW_CPU}
+c_type = 'double'
+src_type = np.double
+if len(sys.argv) > 2:
+    if sys.argv[2] == "f":
+        c_type = 'float'
+        src_type = np.single
+
+if len ( sys.argv ) > 3:
+    plat_arg = sys.argv[3]
+else:
+    plat_arg = "CUDA"
+    
+if plat_arg == "CUDA" and (cp != None):
+    platform = SW_CUDA
+    forGPU = True
+    xp = cp
+elif plat_arg == "HIP" and (cp != None):
+    platform = SW_HIP
+    forGPU = True
+    xp = cp
+else:
+    platform = SW_CPU
+    forGPU = False 
+    xp = np
+
+opts = { SW_OPT_REALCTYPE : c_type, SW_OPT_PLATFORM : platform }
+
+dims = [N,N,N]        
+dimsTuple = tuple(dims)
 
 # direction, SW_FORWARD or SW_INVERSE
 k = SW_FORWARD
@@ -29,7 +56,7 @@ for  k in range (np.size(src)):
     src.itemset(k,vr + vi * 1j)
 
 xp = np
-if genCuda:    
+if forGPU:    
     src = cp.asarray(src)
     xp = cp
 
