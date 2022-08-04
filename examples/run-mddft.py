@@ -14,11 +14,11 @@ if len(sys.argv) > 1:
     N = int ( sys.argv[1] )
 
 c_type = 'double'
-src_type = np.double
+src_type = np.cdouble
 if len(sys.argv) > 2:
     if sys.argv[2] == "f":
         c_type = 'float'
-        src_type = np.single
+        src_type = np.csingle
 
 if len ( sys.argv ) > 3:
     plat_arg = sys.argv[3]
@@ -49,7 +49,7 @@ k = SW_FORWARD
 p1 = MddftProblem(dims, k)
 s1 = MddftSolver(p1, opts)
 
-src = np.ones(dimsTuple, complex)
+src = np.ones(dimsTuple, src_type)
 for  k in range (np.size(src)):
     vr = np.random.random()
     vi = np.random.random()

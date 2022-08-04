@@ -79,13 +79,19 @@ class MddftSolver(SWSolver):
         filetype = '.c'
         if self._genCuda:
             filetype = '.cu'
+        if self._genHIP:
+            filetype = '.cpp'
         
         print("Load(fftx);", file = script_file)
         print("ImportAll(fftx);", file = script_file) 
         if self._genCuda:
             print("conf := LocalConfig.fftx.confGPU();", file = script_file) 
+        elif self._genHIP:
+            print ( 'conf := FFTXGlobals.defaultHIPConf();', file = script_file )
         else:
             print("conf := LocalConfig.fftx.defaultConf();", file = script_file) 
+
+        print('', file = script_file)
         print("t := let(ns := " + dims + ",", file = script_file) 
         print('    name := "' + nameroot + '",', file = script_file)
         # -1 is inverse for Numpy and forward (1) for Spiral
@@ -95,11 +101,15 @@ class MddftSolver(SWSolver):
             print("    TFCall(TRC(MDDFT(ns, " + str(self._problem.direction()) + ")), rec(fname := name, params := []))", file = script_file)
         print(");", file = script_file)        
 
+        print('', file = script_file)
         print("opts := conf.getOpts(t);", file = script_file)
-        if self._genCuda:
+        if self._genCuda or self._genHIP:
             print('opts.wrapCFuncs := true;', file = script_file)
+
         if self._opts.get(SW_OPT_REALCTYPE) == "float":
             print('opts.TRealCtype := "float";', file = script_file)
+
+        print('Add(opts.includes, "<float.h>");',  file = script_file)
         print("tt := opts.tagIt(t);", file = script_file)
         print("", file = script_file)
         print("c := opts.fftxGen(tt);", file = script_file)
