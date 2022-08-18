@@ -153,22 +153,15 @@ class SWSolver:
         return callSpiralWithFile(script)
 
     def _callCMake (self, basename):
-        ##  create a temporary work directory in which to run cmake
         ##  Assumes:  SPIRAL_HOME is defined (environment variable) or override on command line
         ##  FILEROOT = basename;
         
         print("Compiling and linking");
         
-        cwd = os.getcwd()
-        
-        # get module CMakeLists if none exists in current directory
-        if not os.path.exists('CMakeLists.txt'):
-            module_dir = os.path.dirname(__file__)
-            cmfile = os.path.join(module_dir, 'CMakeLists.txt')
-            shutil.copy(cmfile, os.getcwd())
-            
-        tempdir = tempfile.mkdtemp(None, None, cwd)
-        os.chdir(tempdir)
+        # copy module CMakeLists to current directory
+        module_dir = os.path.dirname(__file__)
+        cmfile = os.path.join(module_dir, 'CMakeLists.txt')
+        shutil.copy(cmfile, os.getcwd())
 
         cmake_defroot = '-DFILEROOT:STRING=' + basename
         
@@ -188,27 +181,38 @@ class SWSolver:
         
         if sys.platform == 'win32':
             ##  NOTE: Ensure Python installed on Windows is 64 bit
-            cmd += ' .. && cmake --build . --config Release --target install'
+            cmd += ' . && cmake --build . --config Release --target install'
         else:
-            cmd += ' .. && make install'
+            cmd += ' . && make install'
             
         runResult = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        os.chdir(cwd)
         if runResult.returncode != 0:
             print(runResult.stderr.decode())
-        elif not self._keeptemp:
-            shutil.rmtree(tempdir, ignore_errors=True)
+        
         return runResult.returncode
             
     def _setupCFuncs(self, basename):
+        # create temporary build directory and cd to it
+        cwd = os.getcwd()
+        tempdir = tempfile.mkdtemp(None, None, cwd)
+        os.chdir(tempdir)
+    
         script = basename + ".g"
         self._genScript(script)
         ret = self._callSpiral(script)
-        if ret != SPIRAL_RET_OK:
-            return 1
-        if self._includeMetadata:
-            self._createMetadataFile(basename)
-        return self._callCMake(basename)
+        if ret == SPIRAL_RET_OK:
+            if self._includeMetadata:
+                self._createMetadataFile(basename)
+            ret = self._callCMake(basename)
+        
+        # return to original working directory
+        os.chdir(cwd)
+        
+        # optionally remove temp dir if build OK
+        if (ret == 0) and (not self._keeptemp):
+            shutil.rmtree(tempdir, ignore_errors=True)
+        
+        return ret
         
     def buildTestInput(self):
         raise NotImplementedError()
