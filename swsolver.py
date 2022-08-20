@@ -202,7 +202,7 @@ class SWSolver:
     
         # create temporary build directory and cd to it
         cwd = os.getcwd()
-        tempdir = tempfile.mkdtemp(None, None, cwd)
+        tempdir = tempfile.mkdtemp(None, basename + '_', cwd)
         os.chdir(tempdir)
     
         script = basename + ".g"
