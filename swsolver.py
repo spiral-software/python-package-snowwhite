@@ -60,6 +60,7 @@ class SWSolver:
         self._spiralname = 'spiral'
         self._metadata = dict()
         self._includeMetadata = self._opts.get(SW_OPT_METADATA, False)
+        self._workdir = os.getenv(SW_WORKDIR)
         
         # find and possibly create the subdirectory of temp dirs
         moduleDir = os.path.dirname(os.path.realpath(__file__))
@@ -192,6 +193,13 @@ class SWSolver:
         return runResult.returncode
             
     def _setupCFuncs(self, basename):
+        # if workdir specified, cd to it
+        if self._workdir != None:
+            try:
+                os.chdir(self._workdir)
+            except:
+                print('Could not find workdir "' + str(self._workdir) + '". Using current directory.')
+    
         # create temporary build directory and cd to it
         cwd = os.getcwd()
         tempdir = tempfile.mkdtemp(None, None, cwd)

@@ -8,6 +8,10 @@ try:
     import cupy as _cupy
 except ModuleNotFoundError:
     _cupy = None
+
+# environment varibles
+
+SW_WORKDIR  = "SW_WORKDIR"
     
 
 # options
