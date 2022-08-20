@@ -11,8 +11,8 @@ except ModuleNotFoundError:
 
 # environment varibles
 
-SW_WORKDIR  = "SW_WORKDIR"
-    
+SW_KEEPTEMP  = "SW_KEEPTEMP"
+SW_WORKDIR   = "SW_WORKDIR"
 
 # options
 
@@ -70,7 +70,6 @@ if sys.platform == 'win32':
     SW_SHLIB_EXT = '.dll'
 else:
     SW_SHLIB_EXT = '.so'
-
 
 
 def get_array_module(*args):

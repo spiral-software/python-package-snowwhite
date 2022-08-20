@@ -50,7 +50,7 @@ class SWSolver:
         self._colMajor = self._opts.get(SW_OPT_COLMAJOR, False)
         self._genHIP = (self._opts.get(SW_OPT_PLATFORM, SW_CPU) == SW_HIP)
         self._genCuda = (self._opts.get(SW_OPT_PLATFORM, SW_CPU) == SW_CUDA)
-        self._keeptemp = self._opts.get(SW_OPT_KEEPTEMP, False)
+        self._keeptemp = self._opts.get(SW_OPT_KEEPTEMP, os.getenv(SW_KEEPTEMP) != None)
         self._withMPI = self._opts.get(SW_OPT_MPI, False)
         self._printRuleTree = self._opts.get(SW_OPT_PRINTRULETREE, False)
         self._tracingOn = False
