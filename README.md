@@ -61,6 +61,14 @@ git clone https://github.com/spiral-software/python-package-snowwhite snowwhite
 
 Add the directory that contains the **snowwhite** clone to the environment variable **PYTHONPATH**.  (In the above example that would be ```~/work```.)  This allows Python to locate the **snowwhite** module.
 
+By default, **snowwhite** puts generated files into a temporary directory in the current working directory, then deletes that temporary directory after a successful build.  If there is an error during the build, the temporary directory will remain.  There are two environment variables that can modify this default behavior:
+
++ **SW_WORKDIR** specifies the path to the parent directory of the temporary build directories.  If that specified directory does not exist, **snowwhite** uses the default current directory.
+
++ **SW_KEEPTEMP** if defined (any value) tells **snowwhite** to always preserve temporary build directories.
+
+
+
 ## Try an Example
 
 Copy one of the example Python scripts from the ```examples``` directory to a scratch directory and run it like this:
@@ -77,9 +85,7 @@ Max Diff between Python/C = 5.204170427930421e-18
 
 The first time you run it, you will see output from the CMake/SPIRAL/C build, but after that it will run much faster using the generated library, which is placed in the ```snowwhite/.libs``` directory.
 
-Some of the examples require additional arguments, and some options you can change.  Read through the examples for better understanding, and examine the generated intermediate files in your scratch directory.
-
-
+Some of the examples require additional arguments, and some options you can change.  Read through the examples for better understanding.  If you want to see the generated source files, set the **SW_KEEPTEMP** environment variable and look in the temporary directories.
 
 
 
