@@ -1,13 +1,12 @@
-'''Print meta data in shared library files in .libs directory
-
-script expects to be in examples directory in order to find .libs
+'''Print meta data in shared library files in snowwhite .libs directory
 '''
 
 import os
+import snowwhite
 from snowwhite.metadata import *
 from pprint import *
 
-examplesDir = os.path.dirname(os.path.realpath(__file__))
-libsDir = os.path.join(examplesDir, '../.libs')
+moduleDir = os.path.dirname(os.path.realpath(snowwhite.metadata.__file__))
+libsDir = os.path.join(moduleDir, '.libs')
 md = metadataInDir(libsDir)
 pprint(md)

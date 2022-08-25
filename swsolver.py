@@ -62,7 +62,7 @@ class SWSolver:
         self._includeMetadata = self._opts.get(SW_OPT_METADATA, False)
         self._workdir = os.getenv(SW_WORKDIR)
         
-        # find and possibly create the subdirectory of temp dirs
+        # find and possibly create the .libs subdirectory
         moduleDir = os.path.dirname(os.path.realpath(__file__))
         self._libsDir = os.path.join(moduleDir, '.libs')
         os.makedirs(self._libsDir, mode=0o777, exist_ok=True)
