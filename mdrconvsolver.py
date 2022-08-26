@@ -29,11 +29,16 @@ class MdrconvSolver(SWSolver):
     def __init__(self, problem: MdrconvProblem, opts = {}):
         if not isinstance(problem, MdrconvProblem):
             raise TypeError("problem must be an MdrconvProblem")
-            
+        
+        typ = 'd'
         self._ftype = np.double
+        if opts.get(SW_OPT_REALCTYPE, 0) == 'float':
+            typ = 'f'
+            self._ftype = np.single
+        
         n = str(problem.dimN())
         c = "_";
-        namebase = "Mdrconv" + c + n
+        namebase = typ + "Mdrconv" + c + n
         super(MdrconvSolver, self).__init__(problem, namebase, opts)
 
         
@@ -126,6 +131,8 @@ class MdrconvSolver(SWSolver):
         print("opts := conf.getOpts(t);", file = script_file)
         if self._genCuda:
             print('opts.wrapCFuncs := true;', file = script_file)
+        if self._opts.get(SW_OPT_REALCTYPE) == "float":
+            print('opts.TRealCtype := "float";', file = script_file)
         if self._printRuleTree:
             print("opts.printRuleTree := true;", file = script_file)
         print("tt := opts.tagIt(t);", file = script_file)
@@ -134,17 +141,20 @@ class MdrconvSolver(SWSolver):
         print('PrintTo("' + filename + filetype + '", opts.prettyPrint(c));', file = script_file)
         print("", file = script_file)
     
-    def buildTestInput(self):
+    def buildTestInput(self, shift = (1,1,1), target=(0,0,0)):
         """ Build test input cube """
         
         xp = cp if self._genCuda else np
         n = self._problem.dimN()
         
+        start = (n-shift[0]+target[0],n-shift[1]+target[1],n-shift[2]+target[2])
+        
+        
         testSrc = xp.zeros((n,n,n)).astype(self._ftype)
-        testSrc[n-1,n-1,n-1] = 1.0
+        testSrc[start] = 1.0
         
         symIn = xp.zeros((n*2,n*2,n*2)).astype(self._ftype)
-        symIn[1,1,1] = 1.0
+        symIn[shift] = 1.0
         testSym = xp.fft.rfftn(symIn)
         
         return (testSrc, testSym)

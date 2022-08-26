@@ -50,16 +50,16 @@ if forGPU:
 p1 = MdrconvProblem(N)
 s1 = MdrconvSolver(p1, opts)
 
-for t in range(4):
-    for i in range(t+1,t+5):
+for t in range(8):
+    for i in range(t+1,t+9):
         shift = (i,i,i)
         target = (t,t,t)
         print('shift'+str(shift)+', target'+str(target))
         (testIn, symbol) = s1.buildTestInput(shift, target)
         outPy = s1.runDef(testIn, symbol)
         outC  = s1.scale(s1.solve(testIn, symbol))
-        print('outPy', outPy[target])
-        print('outC ', outC[target])
+        print('outPy %.5f' % outPy[target])
+        print('outC  %.5f' % outC[target])
 
 
 
