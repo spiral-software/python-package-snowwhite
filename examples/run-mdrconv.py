@@ -7,6 +7,7 @@ try:
     import cupy as cp
 except ModuleNotFoundError:
     cp = None
+
 import sys
 
 N = 32
@@ -24,7 +25,7 @@ if len ( sys.argv ) > 3:
     plat_arg = sys.argv[3]
 else:
     plat_arg = "CUDA"
-    
+
 if plat_arg == "CUDA" and (cp != None):
     platform = SW_CUDA
     forGPU = True
@@ -38,6 +39,8 @@ else:
     forGPU = False 
     xp = np
 
+
+
 opts = { SW_OPT_REALCTYPE : c_type, SW_OPT_PLATFORM : platform }
 
 xp = np
@@ -47,10 +50,11 @@ if forGPU:
 p1 = MdrconvProblem(N)
 s1 = MdrconvSolver(p1, opts)
 
-(input_data, symbol) = s1.buildTestInput()
+(testIn, symbol) = s1.buildTestInput()
 
-output_Py = s1.runDef(input_data, symbol)
-output_C = s1.scale(s1.solve(input_data, symbol))
+outPy = s1.runDef(testIn, symbol)
+outC  = s1.scale(s1.solve(testIn, symbol))
 
-diff = np.max ( np.absolute (  output_Py - output_C ))
-print ( 'Max Diff between Python/C = ' + str(diff) )
+print("outPy[0,0,0] = ", outPy[0,0,0])
+print("outC[0,0,0] = ", outC[0,0,0])
+

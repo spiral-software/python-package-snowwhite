@@ -29,6 +29,8 @@ class MdrconvSolver(SWSolver):
     def __init__(self, problem: MdrconvProblem, opts = {}):
         if not isinstance(problem, MdrconvProblem):
             raise TypeError("problem must be an MdrconvProblem")
+            
+        self._ftype = np.double
         n = str(problem.dimN())
         c = "_";
         namebase = "Mdrconv" + c + n
@@ -138,21 +140,12 @@ class MdrconvSolver(SWSolver):
         xp = cp if self._genCuda else np
         n = self._problem.dimN()
         
-        testSrc = xp.random.rand(n,n,n).astype(np.float64)
+        testSrc = xp.zeros((n,n,n)).astype(self._ftype)
+        testSrc[n-1,n-1,n-1] = 1.0
         
-        dims = (2*n, 2*n, n+1)
-        testSym = xp.zeros(dims, np.complex128)
-        z = dims[0]
-        y = dims[1]
-        x = dims[2]
-        for k in range(x):
-            for j in range(y):
-                for i in range(z):
-                    # use NumPy rand() because CuPy version returns array
-                    b1 = np.random.random()
-                    b2 = np.random.random()
-                    v = b1 + (b2 * 1j)
-                    testSym[i,j,k] = v
+        symIn = xp.zeros((n*2,n*2,n*2)).astype(self._ftype)
+        symIn[1,1,1] = 1.0
+        testSym = xp.fft.rfftn(symIn)
         
         return (testSrc, testSym)
      
