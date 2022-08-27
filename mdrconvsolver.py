@@ -38,7 +38,10 @@ class MdrconvSolver(SWSolver):
         
         n = str(problem.dimN())
         c = "_";
-        namebase = typ + "Mdrconv" + c + n
+        namebase = typ + "mdrconv" + c + n
+            
+        opts[SW_OPT_METADATA] = True
+        
         super(MdrconvSolver, self).__init__(problem, namebase, opts)
 
         
@@ -158,6 +161,9 @@ class MdrconvSolver(SWSolver):
         testSym = xp.fft.rfftn(symIn)
         
         return (testSrc, testSym)
+    
+    def _setFunctionMetadata(self, obj):
+        obj[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_MDRCONV
      
 
     
