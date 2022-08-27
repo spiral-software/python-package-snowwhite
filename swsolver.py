@@ -128,6 +128,7 @@ class SWSolver:
         funcmeta[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_UNKNOWN
         funcmeta[SW_KEY_DIMENSIONCOUNT] = len(self._problem.dimensions())
         funcmeta[SW_KEY_DIMENSIONS] = self._problem.dimensions()
+        funcmeta[SW_KEY_PLATFORM] = self._opts.get(SW_OPT_PLATFORM, SW_CPU)
         names = dict()
         funcmeta[SW_KEY_NAMES] = names
         names[SW_KEY_EXEC] = self._namebase
