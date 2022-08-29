@@ -37,8 +37,8 @@ class MdrconvSolver(SWSolver):
             self._ftype = np.single
         
         n = str(problem.dimN())
-        c = "_";
-        namebase = typ + "mdrconv" + c + n
+        ns = 'x'.join([str(n) for n in problem.dimensions()])
+        namebase = typ + 'mdrconv_' + ns
             
         opts[SW_OPT_METADATA] = True
         
