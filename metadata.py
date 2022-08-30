@@ -6,7 +6,7 @@ import glob
 import os
 
 def metadataInFile(filename):
-    """extract metadata from binary file"""
+    """extract metadata from binary file."""
     bstr = bytes(SW_METADATA_START, 'utf-8')
     estr = bytes(SW_METADATA_END, 'utf-8')
     with open(filename, 'rb') as f:
@@ -22,19 +22,19 @@ def metadataInFile(filename):
 
 
 def metadataInDir(path):
-    """Assemble metadata (if any) from shared library files in directory"""
+    """Assemble metadata from shared library files in directory."""
     metalist = []
     filepat = os.path.join(path, '*' + SW_SHLIB_EXT)
     files = glob.glob(filepat)
     for filename in files:
         metaobj = metadataInFile(filename)
         if metaobj != None:
-            metalist.append({'filename':filename, 'metadata':metaobj})
+            metalist.append({SW_KEY_FILENAME:filename, SW_KEY_METADATA:metaobj})
     return metalist
 
 
 def writeMetadataSourceFile(metadata, varname, path):
-    """Write metadata JSON as compileable C string"""
+    """Write metadata JSON as compileable C string."""
     try:
         metadata_file = open(path, 'w')
     except:
@@ -47,4 +47,42 @@ def writeMetadataSourceFile(metadata, varname, path):
     print(metastr, file = metadata_file) 
     print(SW_METADATA_END + '";', file = metadata_file)  
     metadata_file.close()
+    
+    
+def metadataMatches(metadata, metavals):
+    if len(metavals) < 1:
+        return False
+    for k,v in metavals.items():
+        if not k in metadata:
+            return False
+        if v != metadata[k]:
+            return False
+    return True
+    
+    
+def findFunctionsWithMetadata(metavals, libdir=None):
+    """Search for matching metadata in libraries."""
+    if libdir == None:
+        moduleDir = os.path.dirname(os.path.realpath(__file__))
+        libdir = os.path.join(moduleDir, SW_LIBSDIR)
+        
+        
+    if not type(metavals) is dict:
+        return(None, None)
+        
+    transformType = metavals.get(SW_KEY_TRANSFORMTYPE)
+    if transformType == None:
+        return(None, None)
+        
+    mdlist = metadataInDir(libdir)
+    for filedict in mdlist:
+        filemd = filedict.get(SW_KEY_METADATA, {})
+        if transformType not in filemd.get(SW_KEY_TRANSFORMTYPES, []):
+            continue
+        for xform in filemd.get(SW_KEY_TRANSFORMS, []):
+            if metadataMatches(xform, metavals):
+                return(filedict.get(SW_KEY_FILENAME), xform.get(SW_KEY_NAMES, {}))
+            
+    return (None, None)
+
 
