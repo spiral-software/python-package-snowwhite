@@ -64,7 +64,7 @@ class SWSolver:
         
         # find and possibly create the .libs subdirectory
         moduleDir = os.path.dirname(os.path.realpath(__file__))
-        self._libsDir = os.path.join(moduleDir, '.libs')
+        self._libsDir = os.path.join(moduleDir, SW_LIBSDIR)
         os.makedirs(self._libsDir, mode=0o777, exist_ok=True)
         
         if self._genCuda:
