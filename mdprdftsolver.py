@@ -57,6 +57,8 @@ class MdprdftSolver(SWSolver):
         
         if opts.get(SW_OPT_COLMAJOR, False):
             namebase = namebase + '_F'
+            
+        opts[SW_OPT_METADATA] = True
                     
         super(MdprdftSolver, self).__init__(problem, namebase, opts)
 
@@ -129,5 +131,9 @@ class MdprdftSolver(SWSolver):
         print("c := opts.fftxGen(tt);", file = script_file)
         print('PrintTo("' + filename + filetype + '", opts.prettyPrint(c));', file = script_file)
         print("", file = script_file)
+    
+    def _setFunctionMetadata(self, obj):
+        obj[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_MDRPRDFT
+     
         
     
