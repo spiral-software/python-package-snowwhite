@@ -58,7 +58,6 @@ SW_TRANSFORM_MDRCONV    = 'MDRCONV'
 SW_TRANSFORM_UNKNOWN    = 'UNKNOWN'
 
 SW_KEY_DESTROY          = 'Destroy'
-SW_KEY_DIMENSIONCOUNT   = 'DimensionCount'
 SW_KEY_DIMENSIONS       = 'Dimensions'
 SW_KEY_DIRECTION        = 'Direction'
 SW_KEY_EXEC             = 'Exec'
