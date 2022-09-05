@@ -38,7 +38,7 @@ elseif ( ${HASHIP} )
     project ( SPIRAL_HIP
 	VERSION 1.0.1
 	DESCRIPTION "SPIRAL HIP code generation"
-	LANGUAGES CXX )
+	LANGUAGES C CXX )
     set ( SOURCES ${FILEROOT}.cpp )
 
     ##  Setup what we need to build for HIP/ROCm
