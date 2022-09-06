@@ -8,6 +8,8 @@ try:
     import cupy as _cupy
 except ModuleNotFoundError:
     _cupy = None
+
+__version__ = '1.0.0a1'
     
 # internal names
 
