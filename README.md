@@ -61,9 +61,9 @@ git clone https://github.com/spiral-software/python-package-snowwhite snowwhite
 
 Add the directory that contains the **snowwhite** clone to the environment variable **PYTHONPATH**.  (In the above example that would be ```~/work```.)  This allows Python to locate the **snowwhite** module.
 
-By default, **snowwhite** puts generated files into a temporary directory in the current working directory, then deletes that temporary directory after a successful build.  If there is an error during the build, the temporary directory will remain.  There are two environment variables that can modify this default behavior:
+By default, **snowwhite** puts generated files into a temporary directory under the current working directory, then deletes that temporary directory after a successful build.  If there is an error during the build, the temporary directory will remain.  There are two environment variables that can modify this default behavior:
 
-+ **SW_WORKDIR** specifies the path to the parent directory of the temporary build directories.  If that specified directory does not exist, **snowwhite** uses the default current directory.
++ **SW_WORKDIR** specifies the path to the parent directory of the temporary build directories.  If that specified directory does not exist, **snowwhite** uses the current directory.
 
 + **SW_KEEPTEMP** if defined (any value) tells **snowwhite** to always preserve temporary build directories.
 

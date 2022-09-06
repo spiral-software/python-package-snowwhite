@@ -62,9 +62,9 @@ class SWSolver:
         self._includeMetadata = self._opts.get(SW_OPT_METADATA, False)
         self._workdir = os.getenv(SW_WORKDIR)
         
-        # find and possibly create the subdirectory of temp dirs
+        # find and possibly create the .libs subdirectory
         moduleDir = os.path.dirname(os.path.realpath(__file__))
-        self._libsDir = os.path.join(moduleDir, '.libs')
+        self._libsDir = os.path.join(moduleDir, SW_LIBSDIR)
         os.makedirs(self._libsDir, mode=0o777, exist_ok=True)
         
         if self._genCuda:
@@ -73,19 +73,32 @@ class SWSolver:
             self._namebase = namebase + '_hip'
         else:
             self._namebase = namebase
-
-        sharedLibFullPath = os.path.join(self._libsDir, 'lib' + self._namebase + SW_SHLIB_EXT)         
-
-        if not os.path.exists(sharedLibFullPath):
-            self._setupCFuncs(self._namebase)
-
-        self._SharedLibAccess = ctypes.CDLL (sharedLibFullPath)
-        ##  print ( 'SWSolver.__init__: Find main function in library, _namebase = ' + self._namebase, flush = True )
-        self._MainFunc = getattr(self._SharedLibAccess, self._namebase)
-        if self._MainFunc == None:
-            msg = 'could not find function: ' + self._namebase
-            raise RuntimeError(msg)
             
+        self._mainFuncName = self._namebase
+        self._initFuncName = 'init_' + self._namebase
+        self._destroyFuncName = 'destroy_' + self._namebase
+        
+        # check first for library built for this specific transform
+        sharedLibFullPath = os.path.join(self._libsDir, 'lib' + self._namebase + SW_SHLIB_EXT)
+
+        # if no matching specific library, look in metadata of installed libraries
+        # and create one if no matching transform is in an existing installed library
+        if not os.path.exists(sharedLibFullPath):
+            searchmd = self._metadataForSearch()
+            (path, names) = findFunctionsWithMetadata(searchmd)
+            if (type(path) is str) and (type(names) is dict) and (len(names) > 2):
+                sharedLibFullPath = path
+                self._mainFuncName    = names.get(SW_KEY_EXEC, self._mainFuncName)
+                self._initFuncName    = names.get(SW_KEY_INIT, self._initFuncName)
+                self._destroyFuncName = names.get(SW_KEY_DESTROY, self._destroyFuncName)
+            else:
+                self._setupCFuncs(self._namebase)
+
+        self._SharedLibAccess = ctypes.CDLL(sharedLibFullPath)
+        self._MainFunc = getattr(self._SharedLibAccess, self._mainFuncName)
+        if self._MainFunc == None:
+            msg = 'could not find function: ' + self._mainFuncName
+            raise RuntimeError(msg)
         self._initFunc()
 
     def __del__(self):
@@ -126,12 +139,12 @@ class SWSolver:
         funcmeta[SW_KEY_DIRECTION]  = SW_STR_INVERSE if self._problem.direction() == SW_INVERSE else SW_STR_FORWARD
         funcmeta[SW_KEY_PRECISION] = SW_STR_SINGLE if self._opts.get(SW_OPT_REALCTYPE) == "float" else SW_STR_DOUBLE
         funcmeta[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_UNKNOWN
-        funcmeta[SW_KEY_DIMENSIONCOUNT] = len(self._problem.dimensions())
         funcmeta[SW_KEY_DIMENSIONS] = self._problem.dimensions()
+        funcmeta[SW_KEY_PLATFORM] = self._opts.get(SW_OPT_PLATFORM, SW_CPU)
         names = dict()
         funcmeta[SW_KEY_NAMES] = names
-        names[SW_KEY_EXEC] = self._namebase
-        names[SW_KEY_INIT] = 'init_' + self._namebase
+        names[SW_KEY_EXEC] = self._mainFuncName
+        names[SW_KEY_INIT] = self._initFuncName
         names[SW_KEY_DESTROY] = 'destroy_' + self._namebase
         self._setFunctionMetadata(funcmeta)
         md[SW_KEY_TRANSFORMTYPES] = [ funcmeta.get(SW_KEY_TRANSFORMTYPE) ]
@@ -141,7 +154,17 @@ class SWSolver:
         varname  = basename + SW_METAVAR_EXT
         filename = basename + SW_METAFILE_EXT
         self._buildMetadata()
-        writeMetadataSourceFile(self._metadata, varname, filename)    
+        writeMetadataSourceFile(self._metadata, varname, filename) 
+
+    def _metadataForSearch(self):
+        funcmeta = dict()
+        funcmeta[SW_KEY_DIRECTION]  = SW_STR_INVERSE if self._problem.direction() == SW_INVERSE else SW_STR_FORWARD
+        funcmeta[SW_KEY_PRECISION] = SW_STR_SINGLE if self._opts.get(SW_OPT_REALCTYPE) == "float" else SW_STR_DOUBLE
+        funcmeta[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_UNKNOWN
+        funcmeta[SW_KEY_DIMENSIONS] = self._problem.dimensions()
+        funcmeta[SW_KEY_PLATFORM] = self._opts.get(SW_OPT_PLATFORM, SW_CPU)
+        self._setFunctionMetadata(funcmeta)
+        return funcmeta
 
     def _callSpiral(self, script):
         """Run SPIRAL with script as input."""
@@ -237,13 +260,12 @@ class SWSolver:
 
     def _initFunc(self):
         """Call the SPIRAL generated init function"""
-        funcname = 'init_' + self._namebase
-        gf = getattr(self._SharedLibAccess, funcname, None)
+        gf = getattr(self._SharedLibAccess, self._initFuncName, None)
         if gf != None:
             ##  print ( 'SWSolver._initFunc: found init_' + self._namebase, flush = True )
             return gf()
         else:
-            msg = 'could not find function: ' + funcname
+            msg = 'could not find function: ' + self._initFuncName
             raise RuntimeError(msg)
 
     def _func(self, dst, src):
@@ -269,13 +291,11 @@ class SWSolver:
         
     def _destroyFunc(self):
         """Call the SPIRAL generated destroy function"""
-        funcname = 'destroy_' + self._namebase
-        ##  print ( '_destroyFunc: Find destroy func in library, funcname = ' + funcname, flush = True )
-        gf = getattr(self._SharedLibAccess, funcname, None)
+        gf = getattr(self._SharedLibAccess, self._destroyFuncName, None)
         if gf != None:
             return gf()
         else:
-            msg = 'could not find function: ' + funcname
+            msg = 'could not find function: ' + self._destroyFuncName
             raise RuntimeError(msg)
 
     def embedCube(self, N, src, Ns):

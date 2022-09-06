@@ -8,17 +8,21 @@ try:
     import cupy as _cupy
 except ModuleNotFoundError:
     _cupy = None
+    
+# internal names
+
+SW_LIBSDIR  = '.libs'
 
 # environment varibles
 
-SW_KEEPTEMP  = "SW_KEEPTEMP"
-SW_WORKDIR   = "SW_WORKDIR"
+SW_KEEPTEMP  = 'SW_KEEPTEMP'
+SW_WORKDIR   = 'SW_WORKDIR'
 
 # options
 
 SW_OPT_COLMAJOR         = 'colmajor'
 SW_OPT_KEEPTEMP         = 'keeptemp'
-SW_OPT_METADATA         = 'false'
+SW_OPT_METADATA         = 'metadata'
 SW_OPT_MPI              = 'mpi'
 SW_OPT_PLATFORM         = 'platform'
 SW_OPT_PRINTRULETREE    = 'printruletree'
@@ -50,16 +54,20 @@ SW_STR_INVERSE      = 'Inverse'
 
 SW_TRANSFORM_DFT        = 'DFT'
 SW_TRANSFORM_MDDFT      = 'MDDFT'
+SW_TRANSFORM_MDRCONV    = 'MDRCONV'
+SW_TRANSFORM_MDRPRDFT   = 'MDRPRDFT'
 SW_TRANSFORM_UNKNOWN    = 'UNKNOWN'
 
 SW_KEY_DESTROY          = 'Destroy'
-SW_KEY_DIMENSIONCOUNT   = 'DimensionCount'
 SW_KEY_DIMENSIONS       = 'Dimensions'
 SW_KEY_DIRECTION        = 'Direction'
 SW_KEY_EXEC             = 'Exec'
+SW_KEY_FILENAME         = 'Filename'
 SW_KEY_FUNCTIONS        = 'Functions'
 SW_KEY_INIT             = 'Init'
+SW_KEY_METADATA         = 'Metadata'
 SW_KEY_NAMES            = 'Names'
+SW_KEY_PLATFORM         = 'Platform'
 SW_KEY_PRECISION        = 'Precision'
 SW_KEY_SPIRALBUILDINFO  = 'SpiralBuildInfo'
 SW_KEY_TRANSFORMS       = 'Transforms'

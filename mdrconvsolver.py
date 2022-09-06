@@ -29,9 +29,19 @@ class MdrconvSolver(SWSolver):
     def __init__(self, problem: MdrconvProblem, opts = {}):
         if not isinstance(problem, MdrconvProblem):
             raise TypeError("problem must be an MdrconvProblem")
+        
+        typ = 'd'
+        self._ftype = np.double
+        if opts.get(SW_OPT_REALCTYPE, 0) == 'float':
+            typ = 'f'
+            self._ftype = np.single
+        
         n = str(problem.dimN())
-        c = "_";
-        namebase = "Mdrconv" + c + n
+        ns = 'x'.join([str(n) for n in problem.dimensions()])
+        namebase = typ + 'mdrconv_' + ns
+            
+        opts[SW_OPT_METADATA] = True
+        
         super(MdrconvSolver, self).__init__(problem, namebase, opts)
 
         
@@ -124,6 +134,8 @@ class MdrconvSolver(SWSolver):
         print("opts := conf.getOpts(t);", file = script_file)
         if self._genCuda:
             print('opts.wrapCFuncs := true;', file = script_file)
+        if self._opts.get(SW_OPT_REALCTYPE) == "float":
+            print('opts.TRealCtype := "float";', file = script_file)
         if self._printRuleTree:
             print("opts.printRuleTree := true;", file = script_file)
         print("tt := opts.tagIt(t);", file = script_file)
@@ -132,29 +144,26 @@ class MdrconvSolver(SWSolver):
         print('PrintTo("' + filename + filetype + '", opts.prettyPrint(c));', file = script_file)
         print("", file = script_file)
     
-    def buildTestInput(self):
+    def buildTestInput(self, shift = (1,1,1), target=(0,0,0)):
         """ Build test input cube """
         
         xp = cp if self._genCuda else np
         n = self._problem.dimN()
         
-        testSrc = xp.random.rand(n,n,n).astype(np.float64)
+        start = (n-shift[0]+target[0],n-shift[1]+target[1],n-shift[2]+target[2])
         
-        dims = (2*n, 2*n, n+1)
-        testSym = xp.zeros(dims, np.complex128)
-        z = dims[0]
-        y = dims[1]
-        x = dims[2]
-        for k in range(x):
-            for j in range(y):
-                for i in range(z):
-                    # use NumPy rand() because CuPy version returns array
-                    b1 = np.random.random()
-                    b2 = np.random.random()
-                    v = b1 + (b2 * 1j)
-                    testSym[i,j,k] = v
+        
+        testSrc = xp.zeros((n,n,n)).astype(self._ftype)
+        testSrc[start] = 1.0
+        
+        symIn = xp.zeros((n*2,n*2,n*2)).astype(self._ftype)
+        symIn[shift] = 1.0
+        testSym = xp.fft.rfftn(symIn)
         
         return (testSrc, testSym)
+    
+    def _setFunctionMetadata(self, obj):
+        obj[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_MDRCONV
      
 
     
