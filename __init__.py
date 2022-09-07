@@ -15,8 +15,9 @@ SW_LIBSDIR  = '.libs'
 
 # environment varibles
 
-SW_KEEPTEMP  = 'SW_KEEPTEMP'
-SW_WORKDIR   = 'SW_WORKDIR'
+SW_KEEPTEMP     = 'SW_KEEPTEMP'
+SW_LIBRARY_PATH = 'SW_LIBRARY_PATH'
+SW_WORKDIR      = 'SW_WORKDIR'
 
 # options
 
