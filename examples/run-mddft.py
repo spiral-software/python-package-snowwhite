@@ -8,8 +8,7 @@ except ModuleNotFoundError:
     cp = None
 import sys
 
-# default cube dimension
-N = 32
+
 # direction, SW_FORWARD or SW_INVERSE
 k = SW_FORWARD
 # base C type, 'float' or 'double'
@@ -19,9 +18,17 @@ cxtype = np.cdouble
 
 if (len(sys.argv) < 2) or (sys.argv[1] == "?"):
     print("run-mddft sz [ F|I [ d|f  [ CUDA|HIP|CPU ]]]")
+    print("  sz is N or N1,N2,N3")
     sys.exit()
 
-N = int ( sys.argv[1] )
+nnn = sys.argv[1].split(',')
+
+n1 = int(nnn[0])
+n2 = (lambda:n1, lambda:int(nnn[1]))[len(nnn) > 1]()
+n3 = (lambda:n2, lambda:int(nnn[2]))[len(nnn) > 2]()
+
+dims = [n1,n2,n3]
+dimsTuple = tuple(dims)
     
 if len(sys.argv) > 2:
     if sys.argv[2] == "I":
@@ -50,12 +57,7 @@ else:
     forGPU = False 
     xp = np       
 
-dims = [N,N,N]
-dimsTuple = tuple(dims)
-
-
 opts = { SW_OPT_REALCTYPE : c_type, SW_OPT_PLATFORM : platform }
-
    
 p1 = MddftProblem(dims, k)
 s1 = MddftSolver(p1, opts)

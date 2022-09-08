@@ -4,6 +4,7 @@ from snowwhite import *
 import json
 import glob
 import os
+import sys
 
 def metadataInFile(filename):
     """extract metadata from binary file."""
@@ -62,26 +63,34 @@ def metadataMatches(metadata, metavals):
     
 def findFunctionsWithMetadata(metavals, libdir=None):
     """Search for matching metadata in libraries."""
-    if libdir == None:
-        moduleDir = os.path.dirname(os.path.realpath(__file__))
-        libdir = os.path.join(moduleDir, SW_LIBSDIR)
-        
-        
     if not type(metavals) is dict:
         return(None, None)
         
     transformType = metavals.get(SW_KEY_TRANSFORMTYPE)
     if transformType == None:
-        return(None, None)
+        return(None, None)    
         
-    mdlist = metadataInDir(libdir)
-    for filedict in mdlist:
-        filemd = filedict.get(SW_KEY_METADATA, {})
-        if transformType not in filemd.get(SW_KEY_TRANSFORMTYPES, []):
-            continue
-        for xform in filemd.get(SW_KEY_TRANSFORMS, []):
-            if metadataMatches(xform, metavals):
-                return(filedict.get(SW_KEY_FILENAME), xform.get(SW_KEY_NAMES, {}))
+    if libdir == None:
+        moduleDir = os.path.dirname(os.path.realpath(__file__))
+        libdir = os.path.join(moduleDir, SW_LIBSDIR)
+        
+    dirlist = [libdir]
+    
+    libpath = os.getenv(SW_LIBRARY_PATH)
+    if libpath != None:
+        sep = ';' if sys.platform == 'win32' else ':'
+        paths = libpath.split(sep)
+        dirlist = dirlist + paths
+        
+    for libdir in dirlist:    
+        mdlist = metadataInDir(libdir)
+        for filedict in mdlist:
+            filemd = filedict.get(SW_KEY_METADATA, {})
+            if transformType not in filemd.get(SW_KEY_TRANSFORMTYPES, []):
+                continue
+            for xform in filemd.get(SW_KEY_TRANSFORMS, []):
+                if metadataMatches(xform, metavals):
+                    return(filedict.get(SW_KEY_FILENAME), xform.get(SW_KEY_NAMES, {}))
             
     return (None, None)
 

@@ -8,6 +8,8 @@ try:
     import cupy as _cupy
 except ModuleNotFoundError:
     _cupy = None
+
+__version__ = '1.0.0a1'
     
 # internal names
 
@@ -15,8 +17,9 @@ SW_LIBSDIR  = '.libs'
 
 # environment varibles
 
-SW_KEEPTEMP  = 'SW_KEEPTEMP'
-SW_WORKDIR   = 'SW_WORKDIR'
+SW_KEEPTEMP     = 'SW_KEEPTEMP'
+SW_LIBRARY_PATH = 'SW_LIBRARY_PATH'
+SW_WORKDIR      = 'SW_WORKDIR'
 
 # options
 

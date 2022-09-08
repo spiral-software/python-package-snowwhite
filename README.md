@@ -1,9 +1,9 @@
 Python Module for SnowWhite
 ===========================
 
-This is the prototype Python front end for the SPIRAL project's SnowWhite system, which compiles high-level specifications of numerical computations into hardware-specific optimized code.  It supports a variety of CPU's as well as Nvidia and AMD GPU's on systems running Linux, Windows, or MacOS.
+This is the Python front end for the [SPIRAL project's](http://www.spiral.net) SnowWhite system, which compiles high-level specifications of numerical computations into hardware-specific optimized code.  It supports a variety of CPU's as well as Nvidia and AMD GPU's on systems running Linux, Windows, or MacOS.
 
-SnowWhite was developed under the DARPA PAPPA (Performant Automation of Parallel Program Assembly) program.  The program focused on ways reduce the complexity of building software that takes advantage of the massive parallelism of advanced high-preformance computing systems.
+SnowWhite originated under the [DARPA PAPPA](https://www.darpa.mil/program/performant-automation-of-parallel-program-assembly) (Performant Automation of Parallel Program Assembly) program.  The program focused on ways reduce the complexity of building software that takes advantage of the massive parallelism of advanced high-preformance computing systems.  Further work continued as part of [FFTX](http://www.spiral.net/software/fftx.html) under the [Exascale Computing Project](https://www.exascaleproject.org/).
 
 SnowWhite, implemented as a Python module, uses the SPIRAL code generation system to translate NumPy-based specifications to generated code, then compiles that code into a loadable library.
 
@@ -53,7 +53,7 @@ Follow the [build instructions](https://github.com/spiral-software/spiral-softwa
 
 ## Installing and Configuring SnowWhite
 
-Clone **python-package-snowwhite** to a location on you computer renaming it to **snowwhite**.  For example:
+Clone **python-package-snowwhite** to a location on your computer renaming it to **snowwhite**.  For example:
 ```
 cd ~/work
 git clone https://github.com/spiral-software/python-package-snowwhite snowwhite
@@ -68,19 +68,21 @@ By default, **snowwhite** puts generated files into a temporary directory under 
 + **SW_KEEPTEMP** if defined (any value) tells **snowwhite** to always preserve temporary build directories.
 
 
+## Exernal Libraries
+
+**Snowwhite** can access libraries built by [**FFTX**](https://github.com/spiral-software/fftx), which have metadata that describes their contents.  **Snowwhite** looks in its ```.libs``` directory for any libraries containing compatible metadata.  It also looks for libraries in directories specified by the **SW_LIBRARY_PATH** environment variable, with the list of directories having the same format as used for the **PATH** variable.
+
+
 
 ## Try an Example
 
 Copy one of the example Python scripts from the ```examples``` directory to a scratch directory and run it like this:
 
 ```
-D:\Temp>python3 run-hockney8.py
-...
-...
-Install the project...
--- Install configuration: "Release"
--- Installing: /path/to/spiral-software/snowwhite/.libs/libhockney_8_3_5.so
-Max Diff between Python/C = 5.204170427930421e-18
+C:\snowwhite\examples>python run-mddft.py 32
+Generating CUDA
+Compiling and linking
+Diff between Python/C transforms = 1.206500728403121e-12
 ```
 
 The first time you run it, you will see output from the CMake/SPIRAL/C build, but after that it will run much faster using the generated library, which is placed in the ```snowwhite/.libs``` directory.
