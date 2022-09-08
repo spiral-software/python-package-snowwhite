@@ -77,28 +77,17 @@ endif()
 
 if (WIN32)
     set (CUDA_COMPILE_FLAGS -DWIN64 -rdc=false)
+    set ( GPU_COMPILE_DEFNS )
+    set ( LIB_PREF lib )
+    set ( CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON )
 else ()
-    set (CUDA_COMPILE_FLAGS -m64 -rdc=true)
+    ##  set (CUDA_COMPILE_FLAGS -m64 -rdc=true)
+    ##  set ( GPU_COMPILE_DEFNS -dc )
+    set ( LIB_PREF )
 endif ()
 
 if (${HASMPI})
     list ( APPEND CUDA_COMPILE_FLAGS -DFUNCNAME=${FILEROOT} )
-endif ()
-
-
-if (WIN32)
-    set ( GPU_COMPILE_DEFNS )
-else ()
-    set ( GPU_COMPILE_DEFNS -dc )
-endif ()
-
-
-
-if ( WIN32 )
-    set ( LIB_PREF lib )
-    set ( CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON )
-else ()
-    set ( LIB_PREF )
 endif ()
 
 set ( PROJECT ${LIB_PREF}${FILEROOT} )
@@ -107,10 +96,10 @@ add_library ( ${PROJECT} SHARED ${SOURCES} )
 ##  target_compile_options     (${PROJECT}  PRIVATE )		## any flags needed?
 
 if (${HASCUDA})
-	set_property(TARGET ${PROJECT} PROPERTY CUDA_ARCHITECTURES "60;70;72;75;80")
-	set ( CMAKE_CUDA_ARCHITECTURES 70 )
-	target_compile_options     (${PROJECT} PRIVATE ${CUDA_COMPILE_FLAGS} ${GPU_COMPILE_DEFNS})
-	set_property        (TARGET ${PROJECT} PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS ON )
+    set_property(TARGET ${PROJECT} PROPERTY CUDA_ARCHITECTURES "60;70;72;75;80")
+    set ( CMAKE_CUDA_ARCHITECTURES 70 )
+    target_compile_options     (${PROJECT} PRIVATE ${CUDA_COMPILE_FLAGS} ${GPU_COMPILE_DEFNS})
+    set_property        (TARGET ${PROJECT} PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS ON )
 endif()
 
 if ( DEFINED ENV{SPIRAL_HOME} )
