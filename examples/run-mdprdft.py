@@ -8,17 +8,26 @@ except ModuleNotFoundError:
     cp = None
 import sys
 
-# default cube dimenstion
-N = 48
 # direction, SW_FORWARD or SW_INVERSE
 k = SW_FORWARD
-# base type, 'float' or 'double'
-base_type = 'double'
+# base C type, 'float' or 'double'
+c_type = 'double'
 ftype = np.double
 cxtype = np.cdouble
 
-if len(sys.argv) > 1:
-    N = int ( sys.argv[1] )
+if (len(sys.argv) < 2) or (sys.argv[1] == "?"):
+    print("run-mdprdft sz [ F|I [ d|f  [ CUDA|HIP|CPU ]]]")
+    print("  sz is N or N1,N2,N3")
+    sys.exit()
+
+nnn = sys.argv[1].split(',')
+
+n1 = int(nnn[0])
+n2 = (lambda:n1, lambda:int(nnn[1]))[len(nnn) > 1]()
+n3 = (lambda:n2, lambda:int(nnn[2]))[len(nnn) > 2]()
+
+dims = [n1,n2,n3]
+dimsTuple = tuple(dims)
     
 if len(sys.argv) > 2:
     if sys.argv[2] == "I":
@@ -26,21 +35,30 @@ if len(sys.argv) > 2:
         
 if len(sys.argv) > 3:
     if sys.argv[3] == "f":
-        base_type = 'float'
+        c_type = 'float'
         ftype = np.single
         cxtype = np.csingle
+        
+if len ( sys.argv ) > 4:
+    plat_arg = sys.argv[4]
+else:
+    plat_arg = "CUDA" if (cp != None) else "CPU"
+    
+if plat_arg == "CUDA" and (cp != None):
+    platform = SW_CUDA
+    forGPU = True
+    xp = cp
+elif plat_arg == "HIP" and (cp != None):
+    platform = SW_HIP
+    forGPU = True
+    xp = cp
+else:
+    platform = SW_CPU
+    forGPU = False 
+    xp = np       
 
-dims = [N,N,N]
-
-# True of False for CUDA, CUDA requires CuPy
-genCuda = True
-genCuda = genCuda and (cp != None)
-
-platform = SW_CUDA if genCuda else SW_CPU
-
-opts = {SW_OPT_PLATFORM : platform, SW_OPT_REALCTYPE : base_type}
-
-
+opts = { SW_OPT_REALCTYPE : c_type, SW_OPT_PLATFORM : platform }
+   
 p1 = MdprdftProblem(dims, k)
 s1 = MdprdftSolver(p1, opts)
 
@@ -60,7 +78,7 @@ else:
         src.itemset(k,vr + vi * 1j)
 
 xp = np
-if genCuda:    
+if forGPU:    
     src = cp.asarray(src)
     xp = cp
 
