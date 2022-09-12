@@ -133,7 +133,7 @@ class MdprdftSolver(SWSolver):
         print("", file = script_file)
     
     def _setFunctionMetadata(self, obj):
-        obj[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_MDRPRDFT
+        obj[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_MDPRDFT
      
         
     
