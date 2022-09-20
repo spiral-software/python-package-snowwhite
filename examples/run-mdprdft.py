@@ -1,6 +1,6 @@
 #! python
 
-from snowwhite.mddftsolver import *
+from snowwhite.mdprdftsolver import *
 import numpy as np
 try:
     import cupy as cp
@@ -8,16 +8,15 @@ except ModuleNotFoundError:
     cp = None
 import sys
 
-
 # direction, SW_FORWARD or SW_INVERSE
 k = SW_FORWARD
 # base C type, 'float' or 'double'
 c_type = 'double'
+ftype = np.double
 cxtype = np.cdouble
 
-
 if (len(sys.argv) < 2) or (sys.argv[1] == "?"):
-    print("run-mddft sz [ F|I [ d|f  [ CUDA|HIP|CPU ]]]")
+    print("run-mdprdft sz [ F|I [ d|f  [ CUDA|HIP|CPU ]]]")
     print("  sz is N or N1,N2,N3")
     sys.exit()
 
@@ -37,6 +36,7 @@ if len(sys.argv) > 2:
 if len(sys.argv) > 3:
     if sys.argv[3] == "f":
         c_type = 'float'
+        ftype = np.single
         cxtype = np.csingle
         
 if len ( sys.argv ) > 4:
@@ -59,14 +59,23 @@ else:
 
 opts = { SW_OPT_REALCTYPE : c_type, SW_OPT_PLATFORM : platform }
    
-p1 = MddftProblem(dims, k)
-s1 = MddftSolver(p1, opts)
+p1 = MdprdftProblem(dims, k)
+s1 = MdprdftSolver(p1, opts)
 
-src = np.ones(dimsTuple, cxtype)
-for  x in range (np.size(src)):
-    vr = np.random.random()
-    vi = np.random.random()
-    src.itemset(x,vr + vi * 1j)
+if k == SW_FORWARD:
+    src = np.ones(tuple(dims), ftype)
+    for  k in range (np.size(src)):
+        vr = np.random.random()
+        src.itemset(k,vr)
+else:
+    dims2 = dims.copy()
+    z = dims2.pop()
+    dims2.append(z // 2 + 1)
+    src = np.ones(tuple(dims2), cxtype)
+    for  k in range (np.size(src)):
+        vr = np.random.random()
+        vi = np.random.random()
+        src.itemset(k,vr + vi * 1j)
 
 xp = np
 if forGPU:    

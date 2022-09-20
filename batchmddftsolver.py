@@ -1,6 +1,11 @@
 
 from snowwhite import *
+from snowwhite.swsolver import *
 import numpy as np
+try:
+    import cupy as cp
+except ModuleNotFoundError:
+    cp = None
 import ctypes
 import sys
 import random
@@ -8,19 +13,16 @@ import random
 class BatchMddftProblem(SWProblem):
     """Define Batch MDDFT problem."""
 
-    def __init__(self, n, batchSz):
+    def __init__(self, dims, batchSz, k=SW_FORWARD):
         """Setup problem specifics for Batch MDDFT solver.
         
         Arguments:
-        n         -- dimension of 3D DFT Cube
+        dims      -- dimensions of individual 3D DFT
         batchSz   -- batch size
+        k         -- direction, defaulkt SW_FORWARD
         """
-        super(BatchMddftProblem, self).__init__()
-        self._n = n
+        super(BatchMddftProblem, self).__init__(dims, k)
         self._batchSz = batchSz
-        
-    def dimN(self):
-        return self._n
         
     def szBatch(self):
         return self._batchSz
@@ -31,57 +33,62 @@ class BatchMddftSolver(SWSolver):
         if not isinstance(problem, BatchMddftProblem):
             raise TypeError("problem must be a BatchMddftProblem")
  
-        n = str(problem.dimN())
         b = str(problem.szBatch())
-        namebase = "batch3ddft" + n + 'x' + b
+        typ = 'z'
+        if opts.get(SW_OPT_REALCTYPE, 0) == 'float':
+            typ = 'c'
+        ns = 'x'.join([str(n) for n in problem.dimensions()])
+        direc = '_fwd_' if problem.direction() == SW_FORWARD else '_inv_'
+        namebase = typ + 'batchmddft' + direc + ns + 'x' + b
         
         super(BatchMddftSolver, self).__init__(problem, namebase, opts)
 
     def runDef(self, src):
         """Solve using internal Python definition."""
         
-        n = self._problem.dimN()
+        dims = self._problem.dimensions()
         b = self._problem.szBatch()
+        dimsTuple = tuple([b]) + tuple(dims)
         
-        out = np.empty(shape=(b, n, n, n)).astype(complex)
+        xp = get_array_module(src)
+        
+        out = xp.empty(dimsTuple).astype(complex)
         
         for i in range(b):
-            dft = np.fft.fftn(src[i,:,:,:]) 
+            dft = xp.fft.fftn(src[i,:,:,:]) 
             out[i,:,:,:] = dft 
         
         return out
     
        
     def buildTestInput(self):
-        n = self._problem.dimN()
+        dims = self._problem.dimensions()
         b = self._problem.szBatch()
+        dimsTuple = tuple([b]) + tuple(dims)
                
-        ret_Py = np.random.rand(b, n, n, n).astype(complex)
-        ret_C = ret_Py.view(dtype=np.double)
+        src = np.ones(dimsTuple, complex)
+        for  k in range (np.size(src)):
+            vr = np.random.random()
+            vi = np.random.random()
+            src.itemset(k,vr + vi * 1j)
+        if self._genCuda or self._genHIP:    
+            src = cp.asarray(src)
         
-        return ret_Py, ret_C
+        return src
         
         
     def _trace(self):
         pass
-
-    def _func(self, dst, src):
-        """Call the SPIRAL generated main function -- {_namebase}."""
-        funcname = self._namebase
-        gf = getattr(self._SharedLibAccess, funcname, None)
-        if gf != None:
-            return gf( dst.ctypes.data_as(ctypes.c_void_p),
-                       src.ctypes.data_as(ctypes.c_void_p) )
-        else:
-            msg = 'could not find function: ' + funcname
-            raise RuntimeError(msg)
     
     def solve(self, src):
         """Call SPIRAL-generated function."""
+        
+        xp = get_array_module(src)
 
-        n = self._problem.dimN()
+        dims = self._problem.dimensions()
         b = self._problem.szBatch()
-        dst = np.zeros((b*n**3 * 2), dtype=np.double)
+        dimsTuple = tuple([b]) + tuple(dims)
+        dst = xp.zeros(dimsTuple, dtype=np.complex128)
         self._func(dst, src)
         return dst
 
@@ -90,21 +97,16 @@ class BatchMddftSolver(SWSolver):
         filename = nameroot
         filetype = '.c'
         if self._genCuda:
-            nameroot = nameroot + '_cu'
             filetype = '.cu'
-            
-        n = str(self._problem.dimN())
-        b = str(self._problem.szBatch())
-        nnn = '[' + n + ',' + n + ',' + n + ']'
-        
+                
         print('Load(fftx);', file = script_file)
         print('ImportAll(fftx);', file = script_file) 
         print('', file = script_file)
             
-        print('t := let(batch := ' + b + ',', file = script_file)
+        print('t := let(batch := ' + str(self._problem.szBatch()) + ',', file = script_file)
         print('    apat := When(true, APar, AVec),', file = script_file)
-        print('    ns := ' + nnn + ',', file = script_file)
-        print('    k := -1,', file = script_file)
+        print('    ns := ' + str(self._problem.dimensions()) + ',', file = script_file)
+        print('    k := ' + str(self._problem.direction()) + ',', file = script_file)
         print('    name := "' + nameroot + '",', file = script_file)
         print('    TFCall(TRC(TTensorI(MDDFT(ns, k), batch, apat, apat)),', file = script_file)
         print('        rec(fname := name, params := []))', file = script_file)
@@ -116,6 +118,8 @@ class BatchMddftSolver(SWSolver):
         else:
             print('conf := LocalConfig.fftx.defaultConf();', file = script_file)
         print('opts := conf.getOpts(t);', file = script_file)
+        if self._genCuda:
+            print('opts.wrapCFuncs := true;', file = script_file)
         if self._printRuleTree:
             print("opts.printRuleTree := true;", file = script_file)
         print('', file = script_file)  
@@ -125,57 +129,4 @@ class BatchMddftSolver(SWSolver):
         print('PrintTo("' + filename + filetype + '", opts.prettyPrint(c));', file = script_file)
         print('', file = script_file)
         
-    def _writeCudaHost(self):
-        """ Write CUDA host code """
-        
-        # Python interface to C libraries does not handle mangled names from CUDA/C++ compiler
-        
-        n = self._problem.dimN()
-        b = self._problem.szBatch()
-        r = 3 # rank set to 3 for now
-        
-        inSzStr  = str(2 * (n**r) * b)
-        outSzStr = str(2 * (n**r) * b)
-        
-        cu_hostFileName = self._namebase + '_host.cu'
-        cu_hostFile = open(cu_hostFileName, 'w')
-        
-        genby = 'Host-to-Device C/CUDA Wrapper generated by ' + self.__class__.__name__
-        print('/*', file=cu_hostFile)
-        print(' * ' + genby, file=cu_hostFile)
-        print(' */', file=cu_hostFile)
-        print('', file=cu_hostFile)
-        
-        print('#include <helper_cuda.h> \n', file=cu_hostFile)
-        
-        print('extern void init_' + self._namebase + '_cu();', file=cu_hostFile)
-        
-        print('extern void ' + self._namebase + '_cu' + '(double  *Y, double  *X);', file=cu_hostFile)
-        print('extern void destroy_' + self._namebase + '_cu();\n', file=cu_hostFile)
-        print('double  *dev_in, *dev_out; \n', file=cu_hostFile)
-        print('extern "C" { \n', file=cu_hostFile)
-        print('void init_' + self._namebase + '()' + '{', file=cu_hostFile)
-        
-        print('    cudaMalloc( &dev_in,  sizeof(double) * ' + inSzStr + ');', file=cu_hostFile)
-        print('    cudaMalloc( &dev_out, sizeof(double) * ' + outSzStr +'); \n', file=cu_hostFile)
-        print('    init_' + self._namebase + '_cu();', file=cu_hostFile)
-        print('} \n', file=cu_hostFile)
-        
-        print('void ' + self._namebase + '(double  *Y, double  *X) {', file=cu_hostFile)
-        print('    cudaMemcpy ( dev_in, X, sizeof(double) * ' + inSzStr + ', cudaMemcpyHostToDevice);', file=cu_hostFile)
-        print('    ' + self._namebase + '_cu(dev_out, dev_in);', file=cu_hostFile)
-        print('    checkCudaErrors(cudaGetLastError());', file=cu_hostFile)
-        print('    cudaMemcpy ( Y, dev_out, sizeof(double) * ' + outSzStr + ', cudaMemcpyDeviceToHost);', file=cu_hostFile)
-        print('} \n', file=cu_hostFile)
-        
-        print('void destroy_' + self._namebase + '() {', file=cu_hostFile)
-        print('    cudaFree(dev_out);', file=cu_hostFile)
-        print('    cudaFree(dev_in); \n', file=cu_hostFile)
-        print('    destroy_' + self._namebase + '_cu();', file=cu_hostFile)
-        print('} \n', file=cu_hostFile)
-        print('}', file=cu_hostFile)
-        
-        cu_hostFile.close()
-
-
-
+    
