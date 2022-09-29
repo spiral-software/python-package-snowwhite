@@ -75,6 +75,13 @@ class MdrconvSolver(SWSolver):
         """Call SPIRAL-generated code"""
         
         xp = xp = cp if self._genCuda else np
+        
+        #slice sym if it's a cube
+        shape = sym.shape
+        if shape[0] == shape[2]:
+            N = shape[0]
+            Nx = (N // 2) + 1
+            sym = xp.ascontiguousarray(sym[:, :, :Nx])
                 
         N = self._problem.dimN()
         dst = xp.zeros((N,N,N), src.dtype)
