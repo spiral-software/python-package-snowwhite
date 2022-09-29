@@ -74,7 +74,7 @@ class MdrconvSolver(SWSolver):
     def solve(self, src, sym):
         """Call SPIRAL-generated code"""
         
-        xp = xp = cp if self._genCuda else np
+        xp = sw.get_array_module(src)
                 
         N = self._problem.dimN()
         dst = xp.zeros((N,N,N), src.dtype)
@@ -108,15 +108,22 @@ class MdrconvSolver(SWSolver):
     def _writeScript(self, script_file):
         nameroot = self._namebase
         filename = nameroot
-        filetype = '.cu' if self._genCuda else '.c'            
+        filetype = '.c'
+        if self._genCuda:
+            filetype = '.cu'
+        if self._genHIP:
+            filetype = '.cpp'
         
         print("Load(fftx);", file = script_file)
         print("ImportAll(fftx);", file = script_file)
         print("", file = script_file)
         if self._genCuda:
             print("conf := LocalConfig.fftx.confGPU();", file = script_file)
+        elif self._genHIP:
+            print ( 'conf := FFTXGlobals.defaultHIPConf();', file = script_file )
         else:
             print("conf := LocalConfig.fftx.defaultConf();", file = script_file)
+
         print("", file = script_file)
         print('t := let(symvar := var("sym", TPtr(TReal)),', file = script_file)
         print("    TFCall(", file = script_file)
@@ -129,12 +136,16 @@ class MdrconvSolver(SWSolver):
         print(");", file = script_file)
         print("", file = script_file)
         print("opts := conf.getOpts(t);", file = script_file)
-        if self._genCuda:
+
+        if self._genCuda or self._genHIP:
             print('opts.wrapCFuncs := true;', file = script_file)
+
         if self._opts.get(SW_OPT_REALCTYPE) == "float":
             print('opts.TRealCtype := "float";', file = script_file)
+
         if self._printRuleTree:
             print("opts.printRuleTree := true;", file = script_file)
+
         print("tt := opts.tagIt(t);", file = script_file)
         print("", file = script_file)
         print("c := opts.fftxGen(tt);", file = script_file)
@@ -144,7 +155,7 @@ class MdrconvSolver(SWSolver):
     def buildTestInput(self, shift = (1,1,1), target=(0,0,0)):
         """ Build test input cube """
         
-        xp = cp if self._genCuda else np
+        xp = cp if self._genCuda or self._genHIP else np
         n = self._problem.dimN()
         
         start = (n-shift[0]+target[0],n-shift[1]+target[1],n-shift[2]+target[2])
