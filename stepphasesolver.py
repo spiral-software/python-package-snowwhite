@@ -70,7 +70,7 @@ class StepPhaseSolver(SWSolver):
         
         xp = get_array_module(src)
         
-        #slice amplitudes is it's a cube
+        #slice amplitudes if it's a cube
         shape = amplitudes.shape
         if shape[0] == shape[2]:
             N = shape[0]
