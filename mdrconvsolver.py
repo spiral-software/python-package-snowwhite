@@ -79,11 +79,8 @@ class MdrconvSolver(SWSolver):
         N = self._problem.dimN()
         dst = xp.zeros((N,N,N), src.dtype)
         self._func(dst, src, sym)
+        xp.divide(dst, (2*N)**3, out=dst)
         return dst
-
-    def scale(self, d):
-        N = 2 * self._problem.dimN()
-        return (d / N**3)
  
     def _func(self, dst, src, sym):
         """Call the SPIRAL generated main function"""

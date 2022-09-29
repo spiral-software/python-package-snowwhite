@@ -34,14 +34,14 @@ def metadataInDir(path):
     return metalist
 
 
-def writeMetadataSourceFile(metadata, varname, path):
+def writeMetadataSourceFile(metadata, varname, path, spaces=0):
     """Write metadata JSON as compileable C string."""
     try:
         metadata_file = open(path, 'w')
     except:
         print('Error: Could not open ' + path + ' for writing')
         return
-    metastr = json.dumps(metadata, sort_keys=True, indent=4)
+    metastr = json.dumps(metadata, sort_keys=True, indent=spaces)
     metastr = metastr.replace('"', '\\"') + '\\'
     metastr = metastr.replace('\n', '\\\n')
     print('char *' + varname + ' = "' + SW_METADATA_START + '\\', file = metadata_file)  
