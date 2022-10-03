@@ -307,7 +307,9 @@ class SWSolver:
                     retCube[i,j,k] = src[i,j,k]
         if self._tracingOn:
             nnn = '[' + str(N) + ',' + str(N) + ',' + str(N) + ']'
-            nsrange = '[0..' + str(Ns-1) + ']'
+            # nsrange = '[0..' + str(Ns-1) + ']'
+            # Upper part of range, not lower part.
+            nsrange = '[' + str(N-Ns) + '..' + str(N-1) + ']'
             nsr3D = '['+nsrange+','+nsrange+','+nsrange+']'
             st = 'ZeroEmbedBox(' + nnn + ', ' + nsr3D + ')'
             self._callGraph.insert(0, st)
