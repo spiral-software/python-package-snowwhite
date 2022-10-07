@@ -50,16 +50,14 @@ if forGPU:
 p1 = MdrconvProblem(N)
 s1 = MdrconvSolver(p1, opts)
 
-for t in range(4):
-    for i in range(t+1,t+4):
-        shift = (i,i,i)
-        target = (t,t,t)
-        print('shift'+str(shift)+', target'+str(target))
-        (testIn, symbol) = s1.buildTestInput(shift, target)
-        outPy = s1.runDef(testIn, symbol)
-        outC  = s1.solve(testIn, symbol)
-        print('outPy %.5f' % outPy[target])
-        print('outC  %.5f' % outC[target])
+(testIn, symbol) = s1.buildTestInput()
+
+dstP = s1.runDef(testIn, symbol)
+dstC = s1.solve(testIn, symbol)
+
+diff = xp.max ( xp.absolute ( dstC - dstP ) )
+
+print ('Diff between Python/C transforms = ' + str(diff) )
 
 
 

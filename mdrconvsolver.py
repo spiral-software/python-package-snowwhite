@@ -159,20 +159,15 @@ class MdrconvSolver(SWSolver):
         print('PrintTo("' + filename + filetype + '", opts.prettyPrint(c));', file = script_file)
         print("", file = script_file)
     
-    def buildTestInput(self, shift = (1,1,1), target=(0,0,0)):
+    def buildTestInput(self):
         """ Build test input cube """
         
         xp = cp if self._genCuda or self._genHIP else np
         n = self._problem.dimN()
         
-        start = (n-shift[0]+target[0],n-shift[1]+target[1],n-shift[2]+target[2])
+        testSrc = xp.random.rand(n,n,n).astype(self._ftype)
         
-        
-        testSrc = xp.zeros((n,n,n)).astype(self._ftype)
-        testSrc[start] = 1.0
-        
-        symIn = xp.zeros((n*2,n*2,n*2)).astype(self._ftype)
-        symIn[shift] = 1.0
+        symIn = xp.random.rand(n*2,n*2,n*2).astype(self._ftype)
         testSym = xp.fft.rfftn(symIn)
         
         return (testSrc, testSym)
