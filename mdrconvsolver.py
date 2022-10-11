@@ -64,7 +64,7 @@ class MdrconvSolver(SWSolver):
         Nd = self._problem.dimN()
         
         # Mdrconv operations
-        In = self.embedCube(N, src, Ns) # zero pad input data 
+        In = self.zeroEmbedBox(src, ((Ns,0),)) # zero pad input data 
         FFT = self.rfftn(In)            # execute real forward dft on rank 3 data      
         P = self.pointwise(FFT, sym) # execute pointwise operation
         IFFT = self.irfftn(P, shape=In.shape)  # execute real backward dft on rank 3 data

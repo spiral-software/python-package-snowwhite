@@ -300,15 +300,33 @@ class SWSolver:
 
     def embedCube(self, N, src, Ns):
         xp = sw.get_array_module(src)
-        retCube = xp.zeros(shape=(N, N, N))
-        for k in range(Ns):
-            for j in range(Ns):
-                for i in range(Ns):
-                    retCube[i,j,k] = src[i,j,k]
+        retCube = xp.pad(src, ((0,Ns),))
         if self._tracingOn:
             nnn = '[' + str(N) + ',' + str(N) + ',' + str(N) + ']'
             nsrange = '[0..' + str(Ns-1) + ']'
             nsr3D = '['+nsrange+','+nsrange+','+nsrange+']'
+            st = 'ZeroEmbedBox(' + nnn + ', ' + nsr3D + ')'
+            self._callGraph.insert(0, st)
+        return retCube
+
+    def zeroEmbedBox(self, src, padding):
+        xp = sw.get_array_module(src)
+        retCube = xp.pad(src, padding)
+        if self._tracingOn:
+            t1 = padding[0]
+            t2 = padding[1] if len(padding) > 1 else t1
+            t3 = padding[2] if len(padding) > 2 else t2
+            n1 = src.shape[0]
+            n2 = src.shape[1]
+            n3 = src.shape[2]
+            N1 = t1[0] + n1 + t1[1]
+            N2 = t2[0] + n2 + t2[1]
+            N3 = t3[0] + n3 + t3[1]
+            nnn = '[' + str(N1) + ',' + str(N2) + ',' + str(N3) + ']'
+            nsrange1 = '[{}..{}]'.format(t1[0], t1[0] + n1 - 1)
+            nsrange2 = '[{}..{}]'.format(t2[0], t2[0] + n2 - 1)
+            nsrange3 = '[{}..{}]'.format(t3[0], t3[0] + n3 - 1)
+            nsr3D = '['+nsrange1+','+nsrange2+','+nsrange3+']'
             st = 'ZeroEmbedBox(' + nnn + ', ' + nsr3D + ')'
             self._callGraph.insert(0, st)
         return retCube
