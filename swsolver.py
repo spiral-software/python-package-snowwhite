@@ -298,17 +298,6 @@ class SWSolver:
             msg = 'could not find function: ' + self._destroyFuncName
             raise RuntimeError(msg)
 
-    def embedCube(self, N, src, Ns):
-        xp = sw.get_array_module(src)
-        retCube = xp.pad(src, ((0,Ns),))
-        if self._tracingOn:
-            nnn = '[' + str(N) + ',' + str(N) + ',' + str(N) + ']'
-            nsrange = '[0..' + str(Ns-1) + ']'
-            nsr3D = '['+nsrange+','+nsrange+','+nsrange+']'
-            st = 'ZeroEmbedBox(' + nnn + ', ' + nsr3D + ')'
-            self._callGraph.insert(0, st)
-        return retCube
-
     def zeroEmbedBox(self, src, padding):
         xp = sw.get_array_module(src)
         retCube = xp.pad(src, padding)
