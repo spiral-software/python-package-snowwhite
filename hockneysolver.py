@@ -79,8 +79,8 @@ class HockneySolver(SWSolver):
         Nd = self._problem.dimND()
         
         # Hockney operations
-        In = self.embedCube(N, src, Ns) # zero pad input data 
-        FFT = self.rfftn(In)            # execute real forward dft on rank 3 data      
+        In = self.zeroEmbedBox(src, ((0,N-Ns),)) # zero pad input data 
+        FFT = self.rfftn(In)            # execute real forward dft on rank 3 data 
         P = self.pointwise(FFT, self._symbol) # execute pointwise operation
         IFFT = self.irfftn(P, shape=In.shape)  # execute real backward dft on rank 3 data
         D = self.extract(IFFT, N, Nd)   # extract data from corner cube
