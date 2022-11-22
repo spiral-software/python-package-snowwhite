@@ -68,10 +68,9 @@ class MdrconvSolver(SWSolver):
         FFT = self.rfftn(In)            # execute real forward dft on rank 3 data      
         P = self.pointwise(FFT, sym) # execute pointwise operation
         IFFT = self.irfftn(P, shape=In.shape)  # execute real backward dft on rank 3 data
-        D = self.extract(IFFT, N, Nd)   # extract data from corner cube
-        return D
+        return self.extract(IFFT, N, Nd)   # extract data from corner cube
     
-    def solve(self, src, sym):
+    def solve(self, src, sym, dst=None):
         """Call SPIRAL-generated code"""
         
         xp = sw.get_array_module(src)
@@ -83,8 +82,9 @@ class MdrconvSolver(SWSolver):
             Nx = (N // 2) + 1
             sym = xp.ascontiguousarray(sym[:, :, :Nx])
                 
-        N = self._problem.dimN()
-        dst = xp.zeros((N,N,N), src.dtype)
+        N = self._problem.dimN()        
+        if type(dst) == type(None):
+            dst = xp.zeros((N,N,N), src.dtype)
         self._func(dst, src, sym)
         xp.divide(dst, (2*N)**3, out=dst)
         return dst
