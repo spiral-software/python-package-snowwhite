@@ -86,13 +86,14 @@ class HockneySolver(SWSolver):
         D = self.extract(IFFT, N, Nd)   # extract data from corner cube
         return D
     
-    def solve(self, src):
+    def solve(self, src, dst=None):
         """Call SPIRAL-generated code"""
 
         N = self._problem.dimN()
         Nd = self._problem.dimND()
         
-        dst = np.zeros((Nd,Nd,Nd), dtype=np.double)
+        if type(dst) == type(None):
+            dst = np.zeros((Nd,Nd,Nd), dtype=np.double)
 
         # swapaxes was necessary b/c C interprets symbol in y-->x-->z order
         self._func(dst, src, np.swapaxes(self._symbol, axis1=0, axis2=1))

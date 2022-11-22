@@ -55,11 +55,12 @@ class DftSolver(SWSolver):
     def _trace(self):
         pass
 
-    def solve(self, src):
+    def solve(self, src, dst=None):
         """Call SPIRAL-generated function."""
         ##  print('DftSolver.solve:')
         n = self._problem.dimN()
-        dst = np.zeros(n).astype(complex)
+        if type(dst) == type(None):
+            dst = np.zeros(n).astype(complex)
         self._func(dst, src)
         return dst
 

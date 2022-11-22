@@ -58,14 +58,13 @@ class StepPhaseSolver(SWSolver):
             amp_mask,
             amplitudes * xp.exp(1j*phases),
             rho_hat)
-        rho_mod = xp.fft.irfftn(rho_hat_mod, rho.shape)
 
-        return rho_mod
+        return xp.fft.irfftn(rho_hat_mod, rho.shape)
         
     def _trace(self):
         pass
 
-    def solve(self, src, amplitudes):
+    def solve(self, src, amplitudes, dst=None):
         """Call SPIRAL-generated function."""
         
         xp = get_array_module(src)
@@ -79,8 +78,9 @@ class StepPhaseSolver(SWSolver):
         else:
             _amps = amplitudes
 
-        n = self._problem.dimN()
-        dst = xp.zeros((n, n, n), src.dtype)
+        n = self._problem.dimN()        
+        if type(dst) == type(None):
+            dst = xp.zeros((n, n, n), src.dtype)
         self._func(dst, src, _amps)
         xp.divide(dst, xp.size(dst), out=dst)
         return dst
