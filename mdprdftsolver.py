@@ -77,7 +77,7 @@ class MdprdftSolver(SWSolver):
     def _trace(self):
         pass
 
-    def solve(self, src):
+    def solve(self, src, dst=None):
         """Call SPIRAL-generated function."""
         
         xp = get_array_module(src)
@@ -88,7 +88,8 @@ class MdprdftSolver(SWSolver):
             nt = tuple(self._problem.dimensions())
             rtype = self._ftype
         ordc = 'F' if self._colMajor else 'C'
-        dst = xp.zeros(nt, rtype,  order=ordc)
+        if type(dst) == type(None):
+            dst = xp.zeros(nt, rtype,  order=ordc)
         self._func(dst, src)
         if self._problem.direction() == SW_INVERSE:
             xp.divide(dst, xp.size(dst), out=dst)
