@@ -99,7 +99,9 @@ class BatchMddftSolver(SWSolver):
         filetype = '.c'
         if self._genCuda:
             filetype = '.cu'
-                
+        if self._genHIP:
+            filetype = '.cpp'
+
         print('Load(fftx);', file = script_file)
         print('ImportAll(fftx);', file = script_file) 
         print('', file = script_file)
@@ -116,11 +118,15 @@ class BatchMddftSolver(SWSolver):
         
         if self._genCuda:
             print('conf := LocalConfig.fftx.confGPU();', file = script_file)
+        elif self._genHIP:
+            print ( 'conf := FFTXGlobals.defaultHIPConf();', file = script_file )
         else:
             print('conf := LocalConfig.fftx.defaultConf();', file = script_file)
+
         print('opts := conf.getOpts(t);', file = script_file)
-        if self._genCuda:
+        if self._genCuda or self._genHIP:
             print('opts.wrapCFuncs := true;', file = script_file)
+
         if self._printRuleTree:
             print("opts.printRuleTree := true;", file = script_file)
         print('', file = script_file)  
