@@ -82,14 +82,14 @@ class BatchMddftSolver(SWSolver):
     
     def solve(self, src, dst=None):
         """Call SPIRAL-generated function."""
-        
-        xp = get_array_module(src)
-
-        dims = self._problem.dimensions()
-        b = self._problem.szBatch()
-        dimsTuple = tuple([b]) + tuple(dims)
+    
         if type(dst) == type(None):
+            xp = get_array_module(src)
+            dims = self._problem.dimensions()
+            b = self._problem.szBatch()
+            dimsTuple = tuple([b]) + tuple(dims)
             dst = xp.zeros(dimsTuple, dtype=np.complex128)
+        
         self._func(dst, src)
         return dst
 

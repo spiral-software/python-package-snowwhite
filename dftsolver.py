@@ -58,8 +58,8 @@ class DftSolver(SWSolver):
     def solve(self, src, dst=None):
         """Call SPIRAL-generated function."""
         ##  print('DftSolver.solve:')
-        n = self._problem.dimN()
         if type(dst) == type(None):
+            n = self._problem.dimN()
             dst = np.zeros(n).astype(complex)
         self._func(dst, src)
         return dst
