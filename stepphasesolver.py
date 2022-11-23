@@ -77,9 +77,9 @@ class StepPhaseSolver(SWSolver):
             _amps = xp.ascontiguousarray(amplitudes[:, :, :Nx])
         else:
             _amps = amplitudes
-
-        n = self._problem.dimN()        
+      
         if type(dst) == type(None):
+            n = self._problem.dimN()  
             dst = xp.zeros((n, n, n), src.dtype)
         self._func(dst, src, _amps)
         xp.divide(dst, xp.size(dst), out=dst)

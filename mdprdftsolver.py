@@ -80,18 +80,20 @@ class MdprdftSolver(SWSolver):
     def solve(self, src, dst=None):
         """Call SPIRAL-generated function."""
         
-        xp = get_array_module(src)
-        if self._problem.direction() == SW_FORWARD:
-            nt = tuple(self._problem.dimensionsCX())
-            rtype = self._cxtype
-        else:
-            nt = tuple(self._problem.dimensions())
-            rtype = self._ftype
-        ordc = 'F' if self._colMajor else 'C'
         if type(dst) == type(None):
+            xp = get_array_module(src)
+            if self._problem.direction() == SW_FORWARD:
+                nt = tuple(self._problem.dimensionsCX())
+                rtype = self._cxtype
+            else:
+                nt = tuple(self._problem.dimensions())
+                rtype = self._ftype
+            ordc = 'F' if self._colMajor else 'C'
             dst = xp.zeros(nt, rtype,  order=ordc)
+            
         self._func(dst, src)
         if self._problem.direction() == SW_INVERSE:
+            xp = get_array_module(dst)
             xp.divide(dst, xp.size(dst), out=dst)
         return dst
 
@@ -102,6 +104,8 @@ class MdprdftSolver(SWSolver):
         filetype = '.c'
         if self._genCuda:
             filetype = '.cu'
+        if self._genHIP:
+            filetype = '.cpp'
             
         xform = "MDPRDFT"
         if self._problem.direction() == SW_INVERSE:
@@ -111,8 +115,11 @@ class MdprdftSolver(SWSolver):
         print("ImportAll(fftx);", file = script_file) 
         if self._genCuda:
             print("conf := LocalConfig.fftx.confGPU();", file = script_file) 
+        elif self._genHIP:
+            print ( 'conf := FFTXGlobals.defaultHIPConf();', file = script_file )
         else:
             print("conf := LocalConfig.fftx.defaultConf();", file = script_file) 
+
         print("t := let(ns := " + dims + ",", file = script_file) 
         print('    name := "' + nameroot + '",', file = script_file)
         # -1 is inverse for Numpy and forward (1) for Spiral
@@ -123,10 +130,12 @@ class MdprdftSolver(SWSolver):
         print(");", file = script_file)        
 
         print("opts := conf.getOpts(t);", file = script_file)
-        if self._genCuda:
+        if self._genCuda or self._genHIP:
             print('opts.wrapCFuncs := true;', file = script_file)
+
         if self._opts.get(SW_OPT_REALCTYPE) == "float":
             print('opts.TRealCtype := "float";', file = script_file)
+
         print("tt := opts.tagIt(t);", file = script_file)
         print("", file = script_file)
         print("c := opts.fftxGen(tt);", file = script_file)

@@ -88,11 +88,9 @@ class HockneySolver(SWSolver):
     
     def solve(self, src, dst=None):
         """Call SPIRAL-generated code"""
-
-        N = self._problem.dimN()
-        Nd = self._problem.dimND()
         
         if type(dst) == type(None):
+            Nd = self._problem.dimND()
             dst = np.zeros((Nd,Nd,Nd), dtype=np.double)
 
         # swapaxes was necessary b/c C interprets symbol in y-->x-->z order

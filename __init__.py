@@ -79,6 +79,8 @@ SW_KEY_TRANSFORMTYPES   = 'TransformTypes'
 
 if sys.platform == 'win32':
     SW_SHLIB_EXT = '.dll'
+elif sys.platform == 'darwin':
+    SW_SHLIB_EXT = '.dylib'
 else:
     SW_SHLIB_EXT = '.so'
 
