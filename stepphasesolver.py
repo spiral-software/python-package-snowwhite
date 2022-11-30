@@ -69,19 +69,10 @@ class StepPhaseSolver(SWSolver):
         
         xp = get_array_module(src)
         
-        #slice amplitudes if it's a cube
-        shape = amplitudes.shape
-        if shape[0] == shape[2]:
-            N = shape[0]
-            Nx = (N // 2) + 1
-            _amps = xp.ascontiguousarray(amplitudes[:, :, :Nx])
-        else:
-            _amps = amplitudes
-      
         if type(dst) == type(None):
             n = self._problem.dimN()  
             dst = xp.zeros((n, n, n), src.dtype)
-        self._func(dst, src, _amps)
+        self._func(dst, src, amplitudes)
         xp.divide(dst, xp.size(dst), out=dst)
         return dst
                     
@@ -102,14 +93,10 @@ class StepPhaseSolver(SWSolver):
             if not self._genCuda and not self._genHIP:
                 raise RuntimeError('CPU function requires NumPy arrays')
             # CuPy array on GPU
-            srcdev = ctypes.cast(src.data.ptr, ctypes.POINTER(ctypes.c_void_p))
-            dstdev = ctypes.cast(dst.data.ptr, ctypes.POINTER(ctypes.c_void_p))
-            ampdev = ctypes.cast(amplitudes.data.ptr, ctypes.POINTER(ctypes.c_void_p))
-            return self._MainFunc(dstdev, srcdev, ampdev)
-
-                    
-                    
-                    
+            return self._MainFunc(
+                    ctypes.cast(dst.data.ptr, ctypes.POINTER(ctypes.c_void_p)), 
+                    ctypes.cast(src.data.ptr, ctypes.POINTER(ctypes.c_void_p)),
+                    ctypes.cast(amplitudes.data.ptr, ctypes.POINTER(ctypes.c_void_p)))
 
     def _writeScript(self, script_file):
         filename = self._namebase
