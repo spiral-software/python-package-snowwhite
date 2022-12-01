@@ -102,7 +102,11 @@ class SWSolver:
         self._initFunc()
 
     def __del__(self):
-        self._destroyFunc()
+        try:
+            # destroy function may not exist if cleaning up after error
+            self._destroyFunc()
+        except:
+            pass
     
     def solve(self):
         raise NotImplementedError()
@@ -118,7 +122,7 @@ class SWSolver:
         try:
             script_file = open(filename, 'w')
         except:
-            print('Error: Could not open ' + filename + ' for writing')
+            print('Error: Could not open ' + filename + ' for writing', file=sys.stderr)
             return
         timestr = datetime.datetime.now().strftime("%a %b %d %H:%M:%S %Y")
         print(file = script_file)
@@ -211,7 +215,7 @@ class SWSolver:
             
         runResult = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if runResult.returncode != 0:
-            print(runResult.stderr.decode())
+            print(runResult.stderr.decode(), file=sys.stderr)
         
         return runResult.returncode
             
@@ -234,16 +238,26 @@ class SWSolver:
         if ret == SPIRAL_RET_OK:
             if self._includeMetadata:
                 self._createMetadataFile(basename)
-            ret = self._callCMake(basename)
+        else:
+            # return to original working directory and raise error
+            os.chdir(cwd)
+            msg = 'SPIRAL error'
+            raise RuntimeError(msg)
+        
+        ret = self._callCMake(basename)
         
         # return to original working directory
         os.chdir(cwd)
         
-        # optionally remove temp dir if build OK
-        if (ret == 0) and (not self._keeptemp):
+        if ret != 0:
+            msg = "CMake error"
+            raise RuntimeError(msg)
+        
+        # optionally remove temp dir
+        if (not self._keeptemp):
             shutil.rmtree(tempdir, ignore_errors=True)
         
-        return ret
+        return
         
     def buildTestInput(self):
         raise NotImplementedError()

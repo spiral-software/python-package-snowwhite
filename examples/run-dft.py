@@ -4,21 +4,34 @@ from snowwhite.dftsolver import *
 import numpy as np
 import sys
 
-if len(sys.argv) < 3:
-    print ('Usage: ' + sys.argv[0] + ' xform_size dir (where dir is F [forward] or I [inverse])' )
-    sys.exit ('missing argument(s)')
+k = SW_FORWARD
 
-n = int ( sys.argv[1] )
-if sys.argv[2] == "F" or sys.argv[2] == "f":
-    k = SW_FORWARD
-else:
-    k = SW_INVERSE
+c_type = 'double'
+cxtype = np.cdouble
+
+if (len(sys.argv) < 2) or (sys.argv[1] == "?"):
+    print("run-fftn size [ F|I [ d|s ]]")
+    print("  F  = Forward, I = Inverse")
+    print("  d  = double, s = single precision")
+    sys.exit()
+
+n = int(sys.argv[1])
+
+if len(sys.argv) > 2:
+    if sys.argv[2] == "I":
+        k = SW_INVERSE
+
+if len(sys.argv) > 3:
+    if sys.argv[3] == "s":
+        c_type = 'float'
+        cxtype = np.csingle
+
+opts = { SW_OPT_REALCTYPE : c_type }
     
 p1 = DftProblem(n, k)
-s1 = DftSolver(p1)
+s1 = DftSolver(p1, opts)
 
-
-src = np.zeros(n).astype(complex)
+src = np.zeros(n, cxtype)
 
 for i in range (n):
     vr = np.random.random()
