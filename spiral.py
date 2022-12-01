@@ -45,13 +45,13 @@ def callSpiralWithFile(filename):
     try:
         with open(filename, 'r') as f:
             runResult = subprocess.run(SPIRAL_EXE, stdin=f, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            err = runResult.stderr.decode()
-            if len(err) > 10:
-                print(err)
+            if runResult.returncode == 0:
+                return SPIRAL_RET_OK
+            else:
+                print(runResult.stderr.decode(), file=sys.stderr)
                 return SPIRAL_RET_ERR
-            return SPIRAL_RET_OK if runResult.returncode == 0 else SPIRAL_RET_ERR
     except OSError as ex:
-        print(ex.strerror)
+        print(ex.strerror, file=sys.stderr)
     except:
         pass
     return SPIRAL_RET_ERR
