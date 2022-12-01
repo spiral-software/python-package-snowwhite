@@ -24,13 +24,16 @@ class DftSolver(SWSolver):
         if not isinstance(problem, DftProblem):
             raise TypeError("problem must be a DftProblem")
         
+        typ = 'z'
+        if opts.get(SW_OPT_REALCTYPE, 0) == 'float':
+            typ = 'c'
         n = str(problem.dimN())
         c = '_'
         namebase = ''
         if problem.direction() == SW_FORWARD:
-            namebase = 'dft_fwd' + c + n
+            namebase = typ + 'dft_fwd' + c + n
         else:
-            namebase = 'dft_inv' + c + n
+            namebase = typ + 'dft_inv' + c + n
             
         opts[SW_OPT_METADATA] = True
             
@@ -60,18 +63,19 @@ class DftSolver(SWSolver):
         ##  print('DftSolver.solve:')
         if type(dst) == type(None):
             n = self._problem.dimN()
-            dst = np.zeros(n).astype(complex)
+            dst = np.zeros(n, src.dtype)
         self._func(dst, src)
         return dst
 
     def _writeScript(self, script_file):
         nameroot = self._namebase
         filetype = '.c'
-        if self._genCuda:
-            filetype = '.cu'
-        
         
         print("opts := SpiralDefaults;", file = script_file)
+
+        if self._opts.get(SW_OPT_REALCTYPE) == "float":
+            print('opts.TRealCtype := "float";', file = script_file)
+            
         print("", file = script_file)
         print('n  := ' + str ( self._problem.dimN() )  + ';', file = script_file)
         print("", file = script_file)
