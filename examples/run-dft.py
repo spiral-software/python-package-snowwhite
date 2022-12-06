@@ -10,7 +10,7 @@ c_type = 'double'
 cxtype = np.cdouble
 
 if (len(sys.argv) < 2) or (sys.argv[1] == "?"):
-    print("run-dft size [ F|I [ d|s ]]")
+    print("run-dft size [ F|I [ d|s [ CUDA|HIP|CPU ]]]")
     print("  F  = Forward, I = Inverse")
     print("  d  = double, s = single precision")
     sys.exit()
