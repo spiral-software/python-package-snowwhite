@@ -17,8 +17,10 @@ cxtype = np.cdouble
 
 
 if (len(sys.argv) < 2) or (sys.argv[1] == "?"):
-    print("run-mddft sz [ F|I [ d|f  [ CUDA|HIP|CPU ]]]")
+    print("run-mddft sz [ F|I [ d|s  [ CUDA|HIP|CPU ]]]")
     print("  sz is N or N1,N2,N3")
+    print("  F  = Forward, I = Inverse")
+    print("  d  = double, s = single precision")
     sys.exit()
 
 nnn = sys.argv[1].split(',')
@@ -35,7 +37,7 @@ if len(sys.argv) > 2:
         k = SW_INVERSE
         
 if len(sys.argv) > 3:
-    if sys.argv[3] == "f":
+    if sys.argv[3] == "s":
         c_type = 'float'
         cxtype = np.csingle
         
