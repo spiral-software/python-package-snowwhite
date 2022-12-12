@@ -10,7 +10,7 @@ c_type = 'double'
 cxtype = np.cdouble
 
 if (len(sys.argv) < 2) or (sys.argv[1] == "?"):
-    print("run-fftn size [ F|I [ d|s ]]")
+    print("run-dft size [ F|I [ d|s [ CUDA|HIP|CPU ]]]")
     print("  F  = Forward, I = Inverse")
     print("  d  = double, s = single precision")
     sys.exit()
@@ -26,7 +26,25 @@ if len(sys.argv) > 3:
         c_type = 'float'
         cxtype = np.csingle
 
-opts = { SW_OPT_REALCTYPE : c_type }
+if len ( sys.argv ) > 4:
+    plat_arg = sys.argv[4]
+else:
+    plat_arg = "CPU"
+    
+if plat_arg == "CUDA" and (cp != None):
+    platform = SW_CUDA
+    forGPU = True
+    xp = cp
+elif plat_arg == "HIP" and (cp != None):
+    platform = SW_HIP
+    forGPU = True
+    xp = cp
+else:
+    platform = SW_CPU
+    forGPU = False 
+    xp = np
+
+opts = { SW_OPT_REALCTYPE : c_type, SW_OPT_PLATFORM : platform }
     
 p1 = DftProblem(n, k)
 s1 = DftSolver(p1, opts)
@@ -37,10 +55,15 @@ for i in range (n):
     vr = np.random.random()
     vi = np.random.random()
     src[i] = vr + vi * 1j
+    
+xp = np
+if forGPU:    
+    src = cp.asarray(src)
+    xp = cp    
         
 resP = s1.runDef(src)
 resC = s1.solve(src)
 
-diff = np.max ( np.absolute ( resC - resP ) )
+diff = xp.max ( np.absolute ( resC - resP ) )
 
 print ('Diff between Python/C transforms = ' + str(diff) )

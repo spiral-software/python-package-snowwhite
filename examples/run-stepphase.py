@@ -8,6 +8,13 @@ try:
 except ModuleNotFoundError:
     cp = None
 
+
+if (sys.argv[1] == "?"):
+    print("run-stepphase size [ F|I [ d|s [ CUDA|HIP|CPU ]]]")
+    print("  F  = Forward, I = Inverse")
+    print("  d  = double, s = single precision")
+    sys.exit()
+    
 N = 81
 if len(sys.argv) > 1:
     N = int ( sys.argv[1] )
@@ -15,14 +22,14 @@ if len(sys.argv) > 1:
 c_type = 'double'
 src_type = np.double
 if len(sys.argv) > 2:
-    if sys.argv[2] == "f":
+    if sys.argv[2] == "s":
         c_type = 'float'
         src_type = np.single
 
 if len ( sys.argv ) > 3:
     plat_arg = sys.argv[3]
 else:
-    plat_arg = "CUDA"
+    plat_arg = "CUDA" if (cp != None) else "CPU"
     
 if plat_arg == "CUDA" and (cp != None):
     platform = SW_CUDA

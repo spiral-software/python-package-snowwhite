@@ -2,6 +2,10 @@
 from snowwhite import *
 from snowwhite.swsolver import *
 import numpy as np
+try:
+    import cupy as cp
+except ModuleNotFoundError:
+    cp = None
 import ctypes
 import sys
 import random
@@ -41,18 +45,15 @@ class DftSolver(SWSolver):
 
     def runDef(self, src):
         """Solve using internal Python definition."""
-        ##  Python performs an FFT in the inverse direction to SPIRAL.  Thus, to do
-        ##  a direct comparison we must scale the Python IFFT by the vector length
-        ##  before comparing with the SPIRAL FFT
+        
+        xp = get_array_module(src)
+
         N = self._problem.dimN()
         if self._problem.direction() == SW_FORWARD:
-            FFT = np.fft.fft ( src )
+            FFT = xp.fft.fft(src)
         else:
-            FFT = np.fft.ifft ( src )                    ##  * N  ## (no scaling?)
+            FFT = xp.fft.ifft(src)
 
-        ##  PW = FFT * symbol
-        ##  IFFT = np.fft.irfftn(PW)
-        ##  D = IFFT[N-Nd:N, N-Nd:N, N-Nd:N]
         return FFT
         
     def _trace(self):
@@ -62,17 +63,65 @@ class DftSolver(SWSolver):
         """Call SPIRAL-generated function."""
         ##  print('DftSolver.solve:')
         if type(dst) == type(None):
+            xp = get_array_module(src)
             n = self._problem.dimN()
-            dst = np.zeros(n, src.dtype)
+            dst = xp.zeros(n, src.dtype)
         self._func(dst, src)
         return dst
 
+    def _writeGPUScript(self, script_file):
+        filename = self._namebase
+        nameroot = self._namebase
+        filetype = '.c'
+        if self._genCuda:
+            filetype = '.cu'
+        if self._genHIP:
+            filetype = '.cpp'
+        
+        print("Load(fftx);", file = script_file)
+        print("ImportAll(fftx);", file = script_file)
+
+        print('', file = script_file)
+        
+        dft_def = 'DFT(N, ' + str(self._problem.direction()) + ')'
+        if self._problem.direction() == SW_INVERSE:
+            dft_def = 'Scale(1/N, ' + dft_def + ')'
+        
+        print('t := let(', file = script_file) 
+        print('    name := "' + nameroot + '",', file = script_file)
+        print('    N  := ' + str(self._problem.dimN()) + ',', file = script_file)
+        print('    TFCall(TRC(TMap(' + dft_def + ', [Ind(1), Ind(1), Ind(1)], AVec, AVec)), rec(fname := name, params := []))', file = script_file)
+        print(');', file = script_file)
+        
+        if self._genCuda:
+            print("conf := LocalConfig.fftx.confGPU();", file = script_file) 
+        elif self._genHIP:
+            print ( 'conf := FFTXGlobals.defaultHIPConf();', file = script_file )
+        else:
+            print("conf := LocalConfig.fftx.defaultConf();", file = script_file) 
+        print("opts := conf.getOpts(t);", file = script_file)
+        print('opts.wrapCFuncs := true;', file = script_file)
+
+        if self._opts.get(SW_OPT_REALCTYPE) == "float":
+            print('opts.TRealCtype := "float";', file = script_file)
+
+        print('Add(opts.includes, "<float.h>");',  file = script_file)
+        print("tt := opts.tagIt(t);", file = script_file)
+        print("", file = script_file)
+        print("c := opts.fftxGen(tt);", file = script_file)
+        print('PrintTo("' + filename + filetype + '", opts.prettyPrint(c));', file = script_file)
+        print("", file = script_file)
+        
     def _writeScript(self, script_file):
+        if self._genCuda or self._genHIP:
+            self._writeGPUScript(script_file)
+            return
+    
         nameroot = self._namebase
         filetype = '.c'
         
         print("opts := SpiralDefaults;", file = script_file)
-
+        
         if self._opts.get(SW_OPT_REALCTYPE) == "float":
             print('opts.TRealCtype := "float";', file = script_file)
             
@@ -89,7 +138,8 @@ class DftSolver(SWSolver):
         print('code      := CodeRuleTree(ruletree, opts);', file = script_file)
         print('PrintTo("' + nameroot + filetype + '", PrintCode(nameroot, code, opts));', 
             file = script_file)
-        print("", file = script_file)
+        print("", file = script_file)    
+        
         
     def _setFunctionMetadata(self, obj):
         obj[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_DFT
