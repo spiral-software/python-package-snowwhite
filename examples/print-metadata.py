@@ -1,6 +1,7 @@
-'''Print meta data in shared library files in snowwhite .libs directory
-   and in directories specified in SW_LIBRARY_PATH
-'''
+"""
+Print meta data in shared library files in snowwhite .libs directory 
+and in directories specified in SW_LIBRARY_PATH
+"""
 
 import os
 import snowwhite

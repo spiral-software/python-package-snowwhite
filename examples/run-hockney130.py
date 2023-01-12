@@ -1,3 +1,13 @@
+#! python
+
+"""
+usage: run-hockney130.py
+
+  (no arguments)
+  
+size 130 Hockney convolution on CPU
+"""
+
 from snowwhite.hockneysolver import *
 import numpy as np
 
