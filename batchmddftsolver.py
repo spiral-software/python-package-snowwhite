@@ -55,7 +55,10 @@ class BatchMddftSolver(SWSolver):
         out = xp.empty(dimsTuple).astype(complex)
         
         for i in range(b):
-            dft = xp.fft.fftn(src[i,:,:,:]) 
+            if self._problem.direction() == SW_FORWARD:
+                dft = xp.fft.fftn(src[i,:,:,:])
+            else:
+                dft = xp.fft.ifftn(src[i,:,:,:])
             out[i,:,:,:] = dft 
         
         return out
@@ -65,8 +68,13 @@ class BatchMddftSolver(SWSolver):
         dims = self._problem.dimensions()
         b = self._problem.szBatch()
         dimsTuple = tuple([b]) + tuple(dims)
+        
+        if self._opts.get(SW_OPT_REALCTYPE) == "float":
+            cxtype = np.csingle
+        else:
+            cxtype = np.cdouble
                
-        src = np.ones(dimsTuple, complex)
+        src = np.ones(dimsTuple, cxtype)
         for  k in range (np.size(src)):
             vr = np.random.random()
             vi = np.random.random()
@@ -88,9 +96,13 @@ class BatchMddftSolver(SWSolver):
             dims = self._problem.dimensions()
             b = self._problem.szBatch()
             dimsTuple = tuple([b]) + tuple(dims)
-            dst = xp.zeros(dimsTuple, dtype=np.complex128)
+            dst = xp.zeros(dimsTuple, src.dtype)
         
         self._func(dst, src)
+        if self._problem.direction() == SW_INVERSE:
+            xp = get_array_module(dst)
+            scale = xp.size(dst) / self._problem.szBatch()
+            xp.divide(dst, scale, out=dst)
         return dst
 
     def _writeScript(self, script_file):
@@ -121,6 +133,8 @@ class BatchMddftSolver(SWSolver):
         print('opts := conf.getOpts(t);', file = script_file)
         if self._genCuda:
             print('opts.wrapCFuncs := true;', file = script_file)
+        if self._opts.get(SW_OPT_REALCTYPE) == "float":
+            print('opts.TRealCtype := "float";', file = script_file)    
         if self._printRuleTree:
             print("opts.printRuleTree := true;", file = script_file)
         print('', file = script_file)  
