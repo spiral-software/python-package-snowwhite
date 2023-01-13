@@ -1,3 +1,13 @@
+#! python
+
+"""
+usage: run-hockney8.py
+
+  (no arguments)
+  
+size 8 Hockney convolution on CPU
+"""
+
 from snowwhite.hockneysolver import *
 import numpy as np
 

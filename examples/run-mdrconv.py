@@ -1,5 +1,15 @@
 #! python
 
+"""
+usage: run-mdrconv.py N [ d|s [ GPU|CPU ]]
+  N = cube size, N >= 16
+  d  = double, s = single precision   (default: double precision)
+                                    
+  (GPU is default target unless none exists or no CuPy)                     
+                                    
+Three-dimensional real free-space convolution
+"""
+
 import sys
 from snowwhite.mdrconvsolver import *
 import numpy as np
@@ -10,36 +20,38 @@ except ModuleNotFoundError:
 
 import sys
 
-N = 32
-if len(sys.argv) > 1:
-    N = int ( sys.argv[1] )
+def usage():
+    print(__doc__.strip())
+    sys.exit()
+
+try:
+    N = int(sys.argv[1])
+except:
+    usage()
+    
+if N < 16:
+    usage()
 
 c_type = 'double'
 src_type = np.double
 if len(sys.argv) > 2:
-    if sys.argv[2] == "f":
+    if sys.argv[2] == "s":
         c_type = 'float'
         src_type = np.single
 
 if len ( sys.argv ) > 3:
     plat_arg = sys.argv[3]
 else:
-    plat_arg = "CUDA"
+    plat_arg = 'GPU'
 
-if plat_arg == "CUDA" and (cp != None):
-    platform = SW_CUDA
-    forGPU = True
-    xp = cp
-elif plat_arg == "HIP" and (cp != None):
-    platform = SW_HIP
+if plat_arg == 'GPU' and (cp != None):
+    platform = SW_HIP if sw.has_ROCm() else SW_CUDA
     forGPU = True
     xp = cp
 else:
     platform = SW_CPU
     forGPU = False 
     xp = np
-
-
 
 opts = { SW_OPT_REALCTYPE : c_type, SW_OPT_PLATFORM : platform }
 
