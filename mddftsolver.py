@@ -59,16 +59,18 @@ class MddftSolver(SWSolver):
     def _trace(self):
         pass
 
-    def solve(self, src):
+    def solve(self, src, dst=None):
         """Call SPIRAL-generated function."""
-        
-        xp = get_array_module(src)
-
-        nt = tuple(self._problem.dimensions())
-        ordc = 'F' if self._colMajor else 'C'
-        dst = xp.zeros(nt, src.dtype,  order=ordc)
+   
+        if type(dst) == type(None):
+            xp = get_array_module(src)
+            nt = tuple(self._problem.dimensions())
+            ordc = 'F' if self._colMajor else 'C'
+            dst = xp.zeros(nt, src.dtype,  order=ordc)
+            
         self._func(dst, src)
         if self._problem.direction() == SW_INVERSE:
+            xp = get_array_module(dst)
             xp.divide(dst, xp.size(dst), out=dst)
         return dst
 

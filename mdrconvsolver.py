@@ -64,26 +64,30 @@ class MdrconvSolver(SWSolver):
         Nd = self._problem.dimN()
         
         # Mdrconv operations
-        In = self.embedCube(N, src, Ns) # zero pad input data 
+        In = self.zeroEmbedBox(src, ((Ns,0),)) # zero pad input data 
         FFT = self.rfftn(In)            # execute real forward dft on rank 3 data      
         P = self.pointwise(FFT, sym) # execute pointwise operation
         IFFT = self.irfftn(P, shape=In.shape)  # execute real backward dft on rank 3 data
-        D = self.extract(IFFT, N, Nd)   # extract data from corner cube
-        return D
+        return self.extract(IFFT, N, Nd)   # extract data from corner cube
     
-    def solve(self, src, sym):
+    def solve(self, src, sym, dst=None):
         """Call SPIRAL-generated code"""
         
-        xp = xp = cp if self._genCuda else np
+        xp = sw.get_array_module(src)
+        
+        #slice sym if it's a cube
+        shape = sym.shape
+        if shape[0] == shape[2]:
+            N = shape[0]
+            Nx = (N // 2) + 1
+            sym = xp.ascontiguousarray(sym[:, :, :Nx])
                 
-        N = self._problem.dimN()
-        dst = xp.zeros((N,N,N), src.dtype)
+        N = self._problem.dimN()        
+        if type(dst) == type(None):
+            dst = xp.zeros((N,N,N), src.dtype)
         self._func(dst, src, sym)
+        xp.divide(dst, (2*N)**3, out=dst)
         return dst
-
-    def scale(self, d):
-        N = 2 * self._problem.dimN()
-        return (d / N**3)
  
     def _func(self, dst, src, sym):
         """Call the SPIRAL generated main function"""
@@ -111,15 +115,22 @@ class MdrconvSolver(SWSolver):
     def _writeScript(self, script_file):
         nameroot = self._namebase
         filename = nameroot
-        filetype = '.cu' if self._genCuda else '.c'            
+        filetype = '.c'
+        if self._genCuda:
+            filetype = '.cu'
+        if self._genHIP:
+            filetype = '.cpp'
         
         print("Load(fftx);", file = script_file)
         print("ImportAll(fftx);", file = script_file)
         print("", file = script_file)
         if self._genCuda:
             print("conf := LocalConfig.fftx.confGPU();", file = script_file)
+        elif self._genHIP:
+            print ( 'conf := FFTXGlobals.defaultHIPConf();', file = script_file )
         else:
             print("conf := LocalConfig.fftx.defaultConf();", file = script_file)
+
         print("", file = script_file)
         print('t := let(symvar := var("sym", TPtr(TReal)),', file = script_file)
         print("    TFCall(", file = script_file)
@@ -132,32 +143,31 @@ class MdrconvSolver(SWSolver):
         print(");", file = script_file)
         print("", file = script_file)
         print("opts := conf.getOpts(t);", file = script_file)
-        if self._genCuda:
+
+        if self._genCuda or self._genHIP:
             print('opts.wrapCFuncs := true;', file = script_file)
+
         if self._opts.get(SW_OPT_REALCTYPE) == "float":
             print('opts.TRealCtype := "float";', file = script_file)
+
         if self._printRuleTree:
             print("opts.printRuleTree := true;", file = script_file)
+
         print("tt := opts.tagIt(t);", file = script_file)
         print("", file = script_file)
         print("c := opts.fftxGen(tt);", file = script_file)
         print('PrintTo("' + filename + filetype + '", opts.prettyPrint(c));', file = script_file)
         print("", file = script_file)
     
-    def buildTestInput(self, shift = (1,1,1), target=(0,0,0)):
+    def buildTestInput(self):
         """ Build test input cube """
         
-        xp = cp if self._genCuda else np
+        xp = cp if self._genCuda or self._genHIP else np
         n = self._problem.dimN()
         
-        start = (n-shift[0]+target[0],n-shift[1]+target[1],n-shift[2]+target[2])
+        testSrc = xp.random.rand(n,n,n).astype(self._ftype)
         
-        
-        testSrc = xp.zeros((n,n,n)).astype(self._ftype)
-        testSrc[start] = 1.0
-        
-        symIn = xp.zeros((n*2,n*2,n*2)).astype(self._ftype)
-        symIn[shift] = 1.0
+        symIn = xp.random.rand(n*2,n*2,n*2).astype(self._ftype)
         testSym = xp.fft.rfftn(symIn)
         
         return (testSrc, testSym)

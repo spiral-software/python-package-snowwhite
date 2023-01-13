@@ -102,7 +102,11 @@ class SWSolver:
         self._initFunc()
 
     def __del__(self):
-        self._destroyFunc()
+        try:
+            # destroy function may not exist if cleaning up after error
+            self._destroyFunc()
+        except:
+            pass
     
     def solve(self):
         raise NotImplementedError()
@@ -118,7 +122,7 @@ class SWSolver:
         try:
             script_file = open(filename, 'w')
         except:
-            print('Error: Could not open ' + filename + ' for writing')
+            print('Error: Could not open ' + filename + ' for writing', file=sys.stderr)
             return
         timestr = datetime.datetime.now().strftime("%a %b %d %H:%M:%S %Y")
         print(file = script_file)
@@ -211,7 +215,7 @@ class SWSolver:
             
         runResult = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if runResult.returncode != 0:
-            print(runResult.stderr.decode())
+            print(runResult.stderr.decode(), file=sys.stderr)
         
         return runResult.returncode
             
@@ -234,16 +238,26 @@ class SWSolver:
         if ret == SPIRAL_RET_OK:
             if self._includeMetadata:
                 self._createMetadataFile(basename)
-            ret = self._callCMake(basename)
+        else:
+            # return to original working directory and raise error
+            os.chdir(cwd)
+            msg = 'SPIRAL error'
+            raise RuntimeError(msg)
+        
+        ret = self._callCMake(basename)
         
         # return to original working directory
         os.chdir(cwd)
         
-        # optionally remove temp dir if build OK
-        if (ret == 0) and (not self._keeptemp):
+        if ret != 0:
+            msg = "CMake error"
+            raise RuntimeError(msg)
+        
+        # optionally remove temp dir
+        if (not self._keeptemp):
             shutil.rmtree(tempdir, ignore_errors=True)
         
-        return ret
+        return
         
     def buildTestInput(self):
         raise NotImplementedError()
@@ -298,17 +312,24 @@ class SWSolver:
             msg = 'could not find function: ' + self._destroyFuncName
             raise RuntimeError(msg)
 
-    def embedCube(self, N, src, Ns):
+    def zeroEmbedBox(self, src, padding):
         xp = sw.get_array_module(src)
-        retCube = xp.zeros(shape=(N, N, N))
-        for k in range(Ns):
-            for j in range(Ns):
-                for i in range(Ns):
-                    retCube[i,j,k] = src[i,j,k]
+        retCube = xp.pad(src, padding)
         if self._tracingOn:
-            nnn = '[' + str(N) + ',' + str(N) + ',' + str(N) + ']'
-            nsrange = '[0..' + str(Ns-1) + ']'
-            nsr3D = '['+nsrange+','+nsrange+','+nsrange+']'
+            t1 = padding[0]
+            t2 = padding[1] if len(padding) > 1 else t1
+            t3 = padding[2] if len(padding) > 2 else t2
+            n1 = src.shape[0]
+            n2 = src.shape[1]
+            n3 = src.shape[2]
+            N1 = t1[0] + n1 + t1[1]
+            N2 = t2[0] + n2 + t2[1]
+            N3 = t3[0] + n3 + t3[1]
+            nnn = '[' + str(N1) + ',' + str(N2) + ',' + str(N3) + ']'
+            nsrange1 = '[{}..{}]'.format(t1[0], t1[0] + n1 - 1)
+            nsrange2 = '[{}..{}]'.format(t2[0], t2[0] + n2 - 1)
+            nsrange3 = '[{}..{}]'.format(t3[0], t3[0] + n3 - 1)
+            nsr3D = '['+nsrange1+','+nsrange2+','+nsrange3+']'
             st = 'ZeroEmbedBox(' + nnn + ', ' + nsr3D + ')'
             self._callGraph.insert(0, st)
         return retCube

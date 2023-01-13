@@ -1,5 +1,14 @@
 #! python
 
+"""
+usage: run-stepphase.py  N [ d|s [ GPU|CPU ]]
+  N = cube size                       (recommend 81)
+  d  = double, s = single precision   (default: double precision)
+                                    
+  (GPU is default target unless none exists or no CuPy)
+"""
+
+
 import sys
 from snowwhite.stepphasesolver import *
 import numpy as np
@@ -8,28 +17,30 @@ try:
 except ModuleNotFoundError:
     cp = None
 
-N = 81
-if len(sys.argv) > 1:
-    N = int ( sys.argv[1] )
+
+def usage():
+    print(__doc__.strip())
+    sys.exit()
+
+try:
+    N = int(sys.argv[1])
+except:
+    usage()
 
 c_type = 'double'
 src_type = np.double
 if len(sys.argv) > 2:
-    if sys.argv[2] == "f":
+    if sys.argv[2] == "s":
         c_type = 'float'
         src_type = np.single
 
 if len ( sys.argv ) > 3:
     plat_arg = sys.argv[3]
 else:
-    plat_arg = "CUDA"
-    
-if plat_arg == "CUDA" and (cp != None):
-    platform = SW_CUDA
-    forGPU = True
-    xp = cp
-elif plat_arg == "HIP" and (cp != None):
-    platform = SW_HIP
+    plat_arg = 'GPU'
+
+if plat_arg == 'GPU' and (cp != None):
+    platform = SW_HIP if sw.has_ROCm() else SW_CUDA
     forGPU = True
     xp = cp
 else:
@@ -38,9 +49,8 @@ else:
     xp = np
 
 dims = [N,N,N]
-dimsTuple = tuple(dims)
 
-src = np.ones(dimsTuple, dtype=src_type)
+src = np.ones(dims, dtype=src_type)
 for  k in range (np.size(src)):
     src.itemset(k,np.random.random()*10.0)
 

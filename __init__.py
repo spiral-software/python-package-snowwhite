@@ -9,7 +9,7 @@ try:
 except ModuleNotFoundError:
     _cupy = None
 
-__version__ = '1.0.0a1'
+__version__ = '1.0.0'
     
 # internal names
 
@@ -79,6 +79,8 @@ SW_KEY_TRANSFORMTYPES   = 'TransformTypes'
 
 if sys.platform == 'win32':
     SW_SHLIB_EXT = '.dll'
+elif sys.platform == 'darwin':
+    SW_SHLIB_EXT = '.dylib'
 else:
     SW_SHLIB_EXT = '.so'
 

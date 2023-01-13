@@ -58,31 +58,21 @@ class StepPhaseSolver(SWSolver):
             amp_mask,
             amplitudes * xp.exp(1j*phases),
             rho_hat)
-        rho_mod = xp.fft.irfftn(rho_hat_mod, rho.shape)
 
-        return rho_mod
+        return xp.fft.irfftn(rho_hat_mod, rho.shape)
         
     def _trace(self):
         pass
 
-    def solve(self, src, amplitudes):
+    def solve(self, src, amplitudes, dst=None):
         """Call SPIRAL-generated function."""
         
         xp = get_array_module(src)
         
-        #slice amplitudes is it's a cube
-        shape = amplitudes.shape
-        if shape[0] == shape[2]:
-            N = shape[0]
-            Nx = (N // 2) + 1
-            _amps = xp.ascontiguousarray(amplitudes[:, :, :Nx])
-        else:
-            _amps = amplitudes
-
-        n = self._problem.dimN()
-        dst = xp.zeros((n, n, n), src.dtype)
-        self._func(dst, src, _amps)
-        xp.divide(dst, xp.size(dst), out=dst)
+        if type(dst) == type(None):
+            n = self._problem.dimN()  
+            dst = xp.zeros((n, n, n), src.dtype)
+        self._func(dst, src, amplitudes)
         return dst
                     
     def _func(self, dst, src, amplitudes):
@@ -102,14 +92,10 @@ class StepPhaseSolver(SWSolver):
             if not self._genCuda and not self._genHIP:
                 raise RuntimeError('CPU function requires NumPy arrays')
             # CuPy array on GPU
-            srcdev = ctypes.cast(src.data.ptr, ctypes.POINTER(ctypes.c_void_p))
-            dstdev = ctypes.cast(dst.data.ptr, ctypes.POINTER(ctypes.c_void_p))
-            ampdev = ctypes.cast(amplitudes.data.ptr, ctypes.POINTER(ctypes.c_void_p))
-            return self._MainFunc(dstdev, srcdev, ampdev)
-
-                    
-                    
-                    
+            return self._MainFunc(
+                    ctypes.cast(dst.data.ptr, ctypes.POINTER(ctypes.c_void_p)), 
+                    ctypes.cast(src.data.ptr, ctypes.POINTER(ctypes.c_void_p)),
+                    ctypes.cast(amplitudes.data.ptr, ctypes.POINTER(ctypes.c_void_p)))
 
     def _writeScript(self, script_file):
         filename = self._namebase
@@ -137,7 +123,7 @@ class StepPhaseSolver(SWSolver):
         print('name := "' + nameroot + '";', file = script_file)
         print('domain := MDPRDFT(szcube, -1).dims()[1];', file = script_file)
         print('', file = script_file)
-        print('t := TFCall(IMDPRDFT(szcube, 1) * StepPhase_Pointwise(domain, symvar) * MDPRDFT(szcube, -1),', file = script_file)
+        print('t := TFCall(IMDPRDFT(szcube, 1) * StepPhase_Pointwise(domain, symvar, V(fdiv(1.0, Product(szcube)))) * MDPRDFT(szcube, -1),', file = script_file)
         print('    rec(fname := name, params := [symvar]));', file = script_file)
         print('', file = script_file)
         print('opts := conf.getOpts(t);', file = script_file)

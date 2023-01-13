@@ -79,20 +79,19 @@ class HockneySolver(SWSolver):
         Nd = self._problem.dimND()
         
         # Hockney operations
-        In = self.embedCube(N, src, Ns) # zero pad input data 
-        FFT = self.rfftn(In)            # execute real forward dft on rank 3 data      
+        In = self.zeroEmbedBox(src, ((0,N-Ns),)) # zero pad input data 
+        FFT = self.rfftn(In)            # execute real forward dft on rank 3 data 
         P = self.pointwise(FFT, self._symbol) # execute pointwise operation
         IFFT = self.irfftn(P, shape=In.shape)  # execute real backward dft on rank 3 data
         D = self.extract(IFFT, N, Nd)   # extract data from corner cube
         return D
     
-    def solve(self, src):
+    def solve(self, src, dst=None):
         """Call SPIRAL-generated code"""
-
-        N = self._problem.dimN()
-        Nd = self._problem.dimND()
         
-        dst = np.zeros((Nd,Nd,Nd), dtype=np.double)
+        if type(dst) == type(None):
+            Nd = self._problem.dimND()
+            dst = np.zeros((Nd,Nd,Nd), dtype=np.double)
 
         # swapaxes was necessary b/c C interprets symbol in y-->x-->z order
         self._func(dst, src, np.swapaxes(self._symbol, axis1=0, axis2=1))
