@@ -9,7 +9,7 @@ try:
 except ModuleNotFoundError:
     _cupy = None
 
-__version__ = '1.0.0'
+__version__ = '1.0.1a1'
     
 # internal names
 
@@ -58,6 +58,7 @@ SW_STR_INVERSE      = 'Inverse'
 SW_TRANSFORM_DFT        = 'DFT'
 SW_TRANSFORM_MDDFT      = 'MDDFT'
 SW_TRANSFORM_MDRCONV    = 'MDRCONV'
+SW_TRANSFORM_MDRFSCONV  = 'MDRFSCONV'
 SW_TRANSFORM_MDPRDFT    = 'MDPRDFT'
 SW_TRANSFORM_UNKNOWN    = 'UNKNOWN'
 

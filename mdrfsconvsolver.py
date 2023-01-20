@@ -10,25 +10,25 @@ try:
 except ModuleNotFoundError:
     cp = None
 
-class MdrconvProblem(SWProblem):
-    """Define Mdrconv problem."""
+class MdrfsconvProblem(SWProblem):
+    """Define Mdrfsconv problem."""
 
     def __init__(self, n):
-        """Setup problem specifics for Mdrconv solver.
+        """Setup problem specifics for Mdrfsconv solver.
         
         Arguments:
         n      -- dimension of input/output cube
         """
-        super(MdrconvProblem, self).__init__([n,n,n])
+        super(MdrfsconvProblem, self).__init__([n,n,n])
 
     def dimN(self):
         return self.dimensions()[0]
 
 
-class MdrconvSolver(SWSolver):
-    def __init__(self, problem: MdrconvProblem, opts = {}):
-        if not isinstance(problem, MdrconvProblem):
-            raise TypeError("problem must be an MdrconvProblem")
+class MdrfsconvSolver(SWSolver):
+    def __init__(self, problem: MdrfsconvProblem, opts = {}):
+        if not isinstance(problem, MdrfsconvProblem):
+            raise TypeError("problem must be an MdrfsconvProblem")
         
         typ = 'd'
         self._ftype = np.double
@@ -38,11 +38,11 @@ class MdrconvSolver(SWSolver):
         
         n = str(problem.dimN())
         ns = 'x'.join([str(n) for n in problem.dimensions()])
-        namebase = typ + 'mdrconv_' + ns
+        namebase = typ + 'Mdrfsconv_' + ns
             
         opts[SW_OPT_METADATA] = True
         
-        super(MdrconvSolver, self).__init__(problem, namebase, opts)
+        super(MdrfsconvSolver, self).__init__(problem, namebase, opts)
 
         
     def _trace(self):
@@ -58,12 +58,12 @@ class MdrconvSolver(SWSolver):
     def runDef(self, src, sym):
         """Solve using internal Python definition."""
 
-        # Mdrconv problem dimensions
+        # Mdrfsconv problem dimensions
         N = self._problem.dimN() * 2
         Ns = self._problem.dimN()
         Nd = self._problem.dimN()
         
-        # Mdrconv operations
+        # Mdrfsconv operations
         In = self.zeroEmbedBox(src, ((Ns,0),)) # zero pad input data 
         FFT = self.rfftn(In)            # execute real forward dft on rank 3 data      
         P = self.pointwise(FFT, sym) # execute pointwise operation
@@ -173,7 +173,7 @@ class MdrconvSolver(SWSolver):
         return (testSrc, testSym)
     
     def _setFunctionMetadata(self, obj):
-        obj[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_MDRCONV
+        obj[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_MDRFSCONV
      
 
     
