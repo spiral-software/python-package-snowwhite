@@ -1,7 +1,7 @@
 #! python
 
 """
-usage: run-mdrconv.py N [ d|s [ GPU|CPU ]]
+usage: run-mdrfsconv.py N [ d|s [ GPU|CPU ]]
   N = cube size, N >= 16
   d  = double, s = single precision   (default: double precision)
                                     
@@ -11,7 +11,7 @@ Three-dimensional real free-space convolution
 """
 
 import sys
-from snowwhite.mdrconvsolver import *
+from snowwhite.mdrfsconvsolver import *
 import numpy as np
 try:
     import cupy as cp
@@ -53,23 +53,23 @@ else:
     forGPU = False 
     xp = np
 
-opts = { SW_OPT_REALCTYPE : c_type, SW_OPT_PLATFORM : platform }
+opts = {SW_OPT_REALCTYPE : c_type, SW_OPT_PLATFORM : platform}
 
 xp = np
 if forGPU:
     xp = cp
 
-p1 = MdrconvProblem(N)
-s1 = MdrconvSolver(p1, opts)
+p1 = MdrfsconvProblem(N)
+s1 = MdrfsconvSolver(p1, opts)
 
 (testIn, symbol) = s1.buildTestInput()
 
 dstP = s1.runDef(testIn, symbol)
 dstC = s1.solve(testIn, symbol)
 
-diff = xp.max ( xp.absolute ( dstC - dstP ) )
+diff = xp.max(xp.absolute(dstC - dstP))
 
-print ('Diff between Python/C transforms = ' + str(diff) )
+print('Diff between Python/C transforms = ' + str(diff))
 
 
 
