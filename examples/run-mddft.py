@@ -2,13 +2,13 @@
 
 """
 usage: run-mddft.py sz bat [ F|I [ d|s [ GPU|CPU ]]]
-  sz is N or N1,N2,N3, all N >= 2
+  sz is N or N1,N2,.. all N >= 2, single N implies 3D cube
   F  = Forward, I = Inverse           (default: Forward)
   d  = double, s = single precision   (default: double precision)
                                     
   (GPU is default target unless none exists or no CuPy)
   
-3D complex FFT
+Multi-dimensional complex FFT
 """
 
 from snowwhite.mddftsolver import *
@@ -27,9 +27,13 @@ def usage():
 try:
   nnn = sys.argv[1].split(',')
   n1 = int(nnn[0])
-  n2 = (lambda:n1, lambda:int(nnn[1]))[len(nnn) > 1]()
-  n3 = (lambda:n2, lambda:int(nnn[2]))[len(nnn) > 2]()
-  dims = [n1,n2,n3]
+  if len(nnn) < 2:
+    # default to 3D cube
+    dims = [n1,n1,n1]
+  else:
+    dims = [n1]
+    for i in range(1, len(nnn)):
+      dims.append(int(nnn[i]))
 except:
   usage()
   
