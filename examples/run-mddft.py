@@ -1,7 +1,7 @@
 #! python
 
 """
-usage: run-mddft.py sz bat [ F|I [ d|s [ GPU|CPU ]]]
+usage: run-mddft.py sz [ F|I [ d|s [ GPU|CPU ]]]
   sz is N or N1,N2,.. all N >= 2, single N implies 3D cube
   F  = Forward, I = Inverse           (default: Forward)
   d  = double, s = single precision   (default: double precision)

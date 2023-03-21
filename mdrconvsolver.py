@@ -38,9 +38,11 @@ class MdrconvSolver(SWSolver):
         
         typ = 'd'
         self._ftype = np.double
+        self._cxtype = np.cdouble
         if opts.get(SW_OPT_REALCTYPE, 0) == 'float':
             typ = 'f'
             self._ftype = np.single
+            self._cxtype = np.csingle
         
         n = str(problem.dimN())
         ns = 'x'.join([str(n) for n in problem.dimensions()])
@@ -170,9 +172,9 @@ class MdrconvSolver(SWSolver):
         symIn = xp.random.rand(n,n,n).astype(self._ftype)
         testSym = xp.fft.rfftn(symIn)
         
-        #NumPy returns Fortran ordering from FFTs
+        #NumPy returns Fortran ordering from FFTs, and always double complex
         if xp == np:
-            testSym = np.asanyarray(testSym, order='C')
+            testSym = np.asanyarray(testSym, dtype=self._cxtype, order='C')
         
         return (testSrc, testSym)
     
