@@ -39,7 +39,9 @@ class BatchMddftSolver(SWSolver):
             typ = 'c'
         ns = 'x'.join([str(n) for n in problem.dimensions()])
         direc = '_fwd_' if problem.direction() == SW_FORWARD else '_inv_'
-        namebase = typ + 'batchmddft' + direc + ns + 'x' + b
+        namebase = typ + 'batchmddft' + direc + ns + '_' + b
+            
+        opts[SW_OPT_METADATA] = True
         
         super(BatchMddftSolver, self).__init__(problem, namebase, opts)
 
@@ -143,5 +145,16 @@ class BatchMddftSolver(SWSolver):
         print('c := opts.fftxGen(tt);', file = script_file)
         print('PrintTo("' + filename + filetype + '", opts.prettyPrint(c));', file = script_file)
         print('', file = script_file)
+        
+    def _setFunctionMetadata(self, obj):
+        obj[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_BATMDDFT
+        obj[SW_KEY_BATCHSIZE] = self._problem.szBatch()
+        
+    def _metadataForSearch(self):
+        funcmeta = super()._metadataForSearch()
+        funcmeta[SW_KEY_BATCHSIZE] = self._problem.szBatch()
+        self._setFunctionMetadata(funcmeta)
+        return funcmeta
+
         
     
