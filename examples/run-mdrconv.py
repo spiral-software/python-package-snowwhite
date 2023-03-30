@@ -69,7 +69,7 @@ dstC = s1.solve(testIn, symbol)
 
 diff = xp.max(xp.absolute(dstC - dstP))
 
-print('Diff between Python/C transforms = ' + str(diff))
+print('Diff between ' + plat_arg + ' Python/C transforms = ' + str(diff))
 
 
 
