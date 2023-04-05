@@ -69,7 +69,7 @@ class DftSolver(SWSolver):
         self._func(dst, src)
         return dst
 
-    def _writeGPUScript(self, script_file):
+    def _writeScript(self, script_file):
         filename = self._namebase
         nameroot = self._namebase
         filetype = '.c'
@@ -90,7 +90,7 @@ class DftSolver(SWSolver):
         print('t := let(', file = script_file) 
         print('    name := "' + nameroot + '",', file = script_file)
         print('    N  := ' + str(self._problem.dimN()) + ',', file = script_file)
-        print('    TFCall(TRC(TMap(' + dft_def + ', [Ind(1), Ind(1), Ind(1)], AVec, AVec)), rec(fname := name, params := []))', file = script_file)
+        print('    TFCall(TRC(TMap(' + dft_def + ', [Ind(1), Ind(1), Ind(1)], APar, APar)), rec(fname := name, params := []))', file = script_file)
         print(');', file = script_file)
         
         if self._genCuda:
@@ -99,8 +99,10 @@ class DftSolver(SWSolver):
             print ( 'conf := FFTXGlobals.defaultHIPConf();', file = script_file )
         else:
             print("conf := LocalConfig.fftx.defaultConf();", file = script_file) 
+
         print("opts := conf.getOpts(t);", file = script_file)
-        print('opts.wrapCFuncs := true;', file = script_file)
+        if self._genCuda or self._genHIP:
+            print('opts.wrapCFuncs := true;', file = script_file)
 
         if self._opts.get(SW_OPT_REALCTYPE) == "float":
             print('opts.TRealCtype := "float";', file = script_file)
@@ -111,36 +113,7 @@ class DftSolver(SWSolver):
         print("c := opts.fftxGen(tt);", file = script_file)
         print('PrintTo("' + filename + filetype + '", opts.prettyPrint(c));', file = script_file)
         print("", file = script_file)
-        
-    def _writeScript(self, script_file):
-        if self._genCuda or self._genHIP:
-            self._writeGPUScript(script_file)
-            return
     
-        nameroot = self._namebase
-        filetype = '.c'
-        
-        print("opts := SpiralDefaults;", file = script_file)
-        
-        if self._opts.get(SW_OPT_REALCTYPE) == "float":
-            print('opts.TRealCtype := "float";', file = script_file)
-            
-        print("", file = script_file)
-        print('n  := ' + str ( self._problem.dimN() )  + ';', file = script_file)
-        print("", file = script_file)
-        print('nameroot := "' + self._namebase + '";', file = script_file)
-        print("", file = script_file)
-        if self._problem.direction() == SW_INVERSE:
-            print('transform := Scale(1/n, DFT(n, ' + str (self._problem.direction()) + '));', file = script_file)
-        else:
-            print('transform := DFT(n, ' + str (self._problem.direction()) + ');', file = script_file)
-        print('ruletree  := RuleTreeMid(transform, opts);', file = script_file)
-        print('code      := CodeRuleTree(ruletree, opts);', file = script_file)
-        print('PrintTo("' + nameroot + filetype + '", PrintCode(nameroot, code, opts));', 
-            file = script_file)
-        print("", file = script_file)    
-        
-        
     def _setFunctionMetadata(self, obj):
         obj[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_DFT
 
