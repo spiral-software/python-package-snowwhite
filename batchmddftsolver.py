@@ -130,6 +130,8 @@ class BatchMddftSolver(SWSolver):
         
         if self._genCuda:
             print('conf := LocalConfig.fftx.confGPU();', file = script_file)
+        elif self._genHIP:
+            print ( 'conf := FFTXGlobals.defaultHIPConf();', file = script_file )
         else:
             print('conf := LocalConfig.fftx.defaultConf();', file = script_file)
         print('opts := conf.getOpts(t);', file = script_file)
