@@ -54,14 +54,10 @@ class BatchMddftSolver(SWSolver):
         
         xp = get_array_module(src)
         
-        out = xp.empty(dimsTuple).astype(complex)
-        
-        for i in range(b):
-            if self._problem.direction() == SW_FORWARD:
-                dft = xp.fft.fftn(src[i,:,:,:])
-            else:
-                dft = xp.fft.ifftn(src[i,:,:,:])
-            out[i,:,:,:] = dft 
+        if self._problem.direction() == SW_FORWARD:
+            out = xp.fft.fftn(src, axes=(1,2,3))
+        else:
+            out = xp.fft.ifftn(src, axes=(1,2,3))
         
         return out
     
