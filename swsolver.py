@@ -52,7 +52,7 @@ class SWSolver:
         self._genCuda = (self._opts.get(SW_OPT_PLATFORM, SW_CPU) == SW_CUDA)
         self._keeptemp = self._opts.get(SW_OPT_KEEPTEMP, os.getenv(SW_KEEPTEMP) != None)
         self._withMPI = self._opts.get(SW_OPT_MPI, False)
-        self._printRuleTree = self._opts.get(SW_OPT_PRINTRULETREE, False)
+        self._printRuleTree = self._opts.get(SW_OPT_PRINTRULETREE, os.getenv(SW_PRINTRULETREE) != None)
         self._tracingOn = False
         self._callGraph = []
         self._SharedLibAccess = None

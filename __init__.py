@@ -17,9 +17,10 @@ SW_LIBSDIR  = '.libs'
 
 # environment varibles
 
-SW_KEEPTEMP     = 'SW_KEEPTEMP'
-SW_LIBRARY_PATH = 'SW_LIBRARY_PATH'
-SW_WORKDIR      = 'SW_WORKDIR'
+SW_KEEPTEMP      = 'SW_KEEPTEMP'
+SW_LIBRARY_PATH  = 'SW_LIBRARY_PATH'
+SW_PRINTRULETREE = 'SW_PRINTRULETREE'
+SW_WORKDIR       = 'SW_WORKDIR'
 
 # options
 
@@ -55,6 +56,10 @@ SW_STR_SINGLE       = 'Single'
 SW_STR_FORWARD      = 'Forward'
 SW_STR_INVERSE      = 'Inverse'
 
+SW_STR_BLOCK        = 'Block'
+SW_STR_UNIT         = 'Unit'
+
+SW_TRANSFORM_BATDFT     = 'BATDFT'
 SW_TRANSFORM_BATMDDFT   = 'BATMDDFT'
 SW_TRANSFORM_DFT        = 'DFT'
 SW_TRANSFORM_MDDFT      = 'MDDFT'
@@ -75,10 +80,12 @@ SW_KEY_METADATA         = 'Metadata'
 SW_KEY_NAMES            = 'Names'
 SW_KEY_PLATFORM         = 'Platform'
 SW_KEY_PRECISION        = 'Precision'
+SW_KEY_READSTRIDE       = 'ReadStride'
 SW_KEY_SPIRALBUILDINFO  = 'SpiralBuildInfo'
 SW_KEY_TRANSFORMS       = 'Transforms'
 SW_KEY_TRANSFORMTYPE    = 'TransformType'
 SW_KEY_TRANSFORMTYPES   = 'TransformTypes'
+SW_KEY_WRITESTRIDE      = 'WriteStride'
 
 if sys.platform == 'win32':
     SW_SHLIB_EXT = '.dll'

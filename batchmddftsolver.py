@@ -54,14 +54,10 @@ class BatchMddftSolver(SWSolver):
         
         xp = get_array_module(src)
         
-        out = xp.empty(dimsTuple).astype(complex)
-        
-        for i in range(b):
-            if self._problem.direction() == SW_FORWARD:
-                dft = xp.fft.fftn(src[i,:,:,:])
-            else:
-                dft = xp.fft.ifftn(src[i,:,:,:])
-            out[i,:,:,:] = dft 
+        if self._problem.direction() == SW_FORWARD:
+            out = xp.fft.fftn(src, axes=(1,2,3))
+        else:
+            out = xp.fft.ifftn(src, axes=(1,2,3))
         
         return out
     
@@ -130,6 +126,8 @@ class BatchMddftSolver(SWSolver):
         
         if self._genCuda:
             print('conf := LocalConfig.fftx.confGPU();', file = script_file)
+        elif self._genHIP:
+            print ( 'conf := FFTXGlobals.defaultHIPConf();', file = script_file )
         else:
             print('conf := LocalConfig.fftx.defaultConf();', file = script_file)
         print('opts := conf.getOpts(t);', file = script_file)
@@ -150,11 +148,7 @@ class BatchMddftSolver(SWSolver):
         obj[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_BATMDDFT
         obj[SW_KEY_BATCHSIZE] = self._problem.szBatch()
         
-    def _metadataForSearch(self):
-        funcmeta = super()._metadataForSearch()
-        funcmeta[SW_KEY_BATCHSIZE] = self._problem.szBatch()
-        self._setFunctionMetadata(funcmeta)
-        return funcmeta
+
 
         
     
