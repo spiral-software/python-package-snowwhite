@@ -148,11 +148,7 @@ class BatchMddftSolver(SWSolver):
         obj[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_BATMDDFT
         obj[SW_KEY_BATCHSIZE] = self._problem.szBatch()
         
-    def _metadataForSearch(self):
-        funcmeta = super()._metadataForSearch()
-        funcmeta[SW_KEY_BATCHSIZE] = self._problem.szBatch()
-        self._setFunctionMetadata(funcmeta)
-        return funcmeta
+
 
         
     
