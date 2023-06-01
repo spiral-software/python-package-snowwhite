@@ -13,14 +13,20 @@ import random
 class DftProblem(SWProblem):
     """Define 1D DFT problem."""
 
-    def __init__(self, n, k=SW_FORWARD):
+    def __init__(self, n, k=SW_FORWARD, batchDims=[1,1], readStride=1, writeStride=1):
         """Setup problem specifics for 1D DFT solver.
         
         Arguments:
-        n      -- dimension of 1D DFT
-        k      -- direction
+        k           -- direction
+        n           -- dimension of 1D DFT
+        batchDims   -- dimensions of batch
+        readStride  -- unit (1) or block (!=1)
+        writeStride -- unit (1) or block (!=1)
         """
         super(DftProblem, self).__init__([n], k)
+        self._batchDims = batchDims
+        self._readStride = readStride
+        self._writeStride = writeStride
 
 
 class DftSolver(SWSolver):
@@ -39,7 +45,14 @@ class DftSolver(SWSolver):
         else:
             namebase = typ + 'dft_inv' + c + n
             
-        opts[SW_OPT_METADATA] = True
+        dims = problem._batchDims
+        bat = np.prod(dims)
+        if bat > 1:
+            namebase = namebase + c + 'b' + str(dims[0]) 
+            namebase = namebase + ('p' if problem._writeStride == 1 else 'v')
+            namebase = namebase + ('p' if problem._readStride == 1 else 'v')
+            
+        opts[SW_OPT_METADATA] = False
             
         super(DftSolver, self).__init__(problem, namebase, opts)
 
@@ -48,24 +61,41 @@ class DftSolver(SWSolver):
         
         xp = get_array_module(src)
 
-        N = self._problem.dimN()
+        ax = -1 if self._problem._readStride == 1 else 0
+        
         if self._problem.direction() == SW_FORWARD:
-            FFT = xp.fft.fft(src)
+            dst = xp.fft.fft(src, axis=ax)
         else:
-            FFT = xp.fft.ifft(src)
+            dst = xp.fft.ifft(src, axis=ax)
+            
+        if self._problem._writeStride != self._problem._readStride:
+            if self._problem._writeStride != 1:
+                # Par Vec
+                # new shape is inverse of src
+                revdims = src.shape[::-1]
+                drt = dst.reshape(np.asarray(revdims[1:]).prod(), revdims[0]).transpose()
+                dst = drt.reshape(revdims)
+            else:
+                # Vec Par
+                dims = dst.shape
+                drt = dst.reshape(dims[0], np.asarray(dims[1:]).prod()).transpose()
+                dst = drt.reshape(dims[::-1])
 
-        return FFT
+        return dst
         
     def _trace(self):
         pass
 
     def solve(self, src, dst=None):
         """Call SPIRAL-generated function."""
-        ##  print('DftSolver.solve:')
         if type(dst) == type(None):
             xp = get_array_module(src)
-            n = self._problem.dimN()
-            dst = xp.zeros(n, src.dtype)
+            if self._problem._writeStride == self._problem._readStride:
+                dst = xp.zeros_like(src)
+            else:
+                # reverse dims
+                dims = src.shape[::-1]
+                dst = xp.zeros(dims,src.dtype)
         self._func(dst, src)
         return dst
 
@@ -87,10 +117,17 @@ class DftSolver(SWSolver):
         if self._problem.direction() == SW_INVERSE:
             dft_def = 'Scale(1/N, ' + dft_def + ')'
         
+        bdims = self._problem._batchDims
+        #bdims_str = '[Ind({0}), Ind({1}), Ind(1)]'.format(bdims[0],bdims[1])
+        bdims_str = str(np.prod(bdims))
+        
+        W = 'APar' if self._problem._writeStride == 1 else 'AVec'
+        R = 'APar' if self._problem._readStride == 1 else 'AVec'
+        
         print('t := let(', file = script_file) 
         print('    name := "' + nameroot + '",', file = script_file)
         print('    N  := ' + str(self._problem.dimN()) + ',', file = script_file)
-        print('    TFCall(TRC(TMap(' + dft_def + ', [Ind(1), Ind(1), Ind(1)], APar, APar)), rec(fname := name, params := []))', file = script_file)
+        print('    TFCall(TRC(TTensorI(' + dft_def + ', ' + bdims_str + ' ,' + W + ', ' + R +')), rec(fname := name, params := []))', file = script_file)
         print(');', file = script_file)
         
         if self._genCuda:
