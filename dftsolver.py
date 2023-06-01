@@ -48,11 +48,11 @@ class DftSolver(SWSolver):
         dims = problem._batchDims
         bat = np.prod(dims)
         if bat > 1:
-            namebase = namebase + c + 'b' + str(dims[0]) 
+            namebase = namebase + c + 'b' + 'x'.join([str(n) for n in dims])
             namebase = namebase + ('p' if problem._writeStride == 1 else 'v')
             namebase = namebase + ('p' if problem._readStride == 1 else 'v')
             
-        opts[SW_OPT_METADATA] = False
+        opts[SW_OPT_METADATA] = True
             
         super(DftSolver, self).__init__(problem, namebase, opts)
 
@@ -155,8 +155,14 @@ class DftSolver(SWSolver):
         print("", file = script_file)
     
     def _setFunctionMetadata(self, obj):
-        obj[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_DFT
-
+        bdims = self._problem._batchDims
+        if np.prod(bdims) > 1:
+            obj[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_BATDFT
+            obj[SW_KEY_BATCHSIZE] = bdims
+            obj[SW_KEY_READSTRIDE]  = SW_STR_UNIT if self._problem._readStride  == 1 else SW_STR_BLOCK
+            obj[SW_KEY_WRITESTRIDE] = SW_STR_UNIT if self._problem._writeStride == 1 else SW_STR_BLOCK
+        else:
+            obj[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_DFT
 
 
 
