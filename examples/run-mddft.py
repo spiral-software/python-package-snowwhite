@@ -1,12 +1,12 @@
 #! python
 
 """
-usage: run-mddft.py sz [ F|I [ d|s [ GPU|CPU ]]]
+usage: run-mddft.py sz [ F|I [ d|s [ GPU|CPU [Fortran]]]
   sz is N or N1,N2,.. all N >= 2, single N implies 3D cube
   F  = Forward, I = Inverse           (default: Forward)
   d  = double, s = single precision   (default: double precision)
-                                    
-  (GPU is default target unless none exists or no CuPy)
+  GPU is default target unless none exists or no CuPy
+  C ordering is default unless Fortran specified
   
 Multi-dimensional complex FFT
 """
@@ -58,6 +58,11 @@ if len ( sys.argv ) > 4:
     plat_arg = sys.argv[4]
 else:
     plat_arg = 'GPU'
+    
+order = 'C'
+if (len ( sys.argv ) > 5) and (sys.argv[5].lower() == 'fortran'):
+    order = 'F'
+
 
 if plat_arg == 'GPU' and (cp != None):
     platform = SW_HIP if sw.has_ROCm() else SW_CUDA
@@ -69,11 +74,13 @@ else:
     xp = np       
 
 opts = { SW_OPT_REALCTYPE : c_type, SW_OPT_PLATFORM : platform }
+if order == 'F':
+    opts[SW_OPT_COLMAJOR] = True
    
 p1 = MddftProblem(dims, k)
 s1 = MddftSolver(p1, opts)
 
-src = np.ones(dims, cxtype)
+src = np.ones(dims, cxtype, order)
 for  x in range (np.size(src)):
     vr = np.random.random()
     vi = np.random.random()

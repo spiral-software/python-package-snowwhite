@@ -123,4 +123,4 @@ class MddftSolver(SWSolver):
         
     def _setFunctionMetadata(self, obj):
         obj[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_MDDFT
-        
+        obj[SW_KEY_ORDER] = SW_STR_FORTRAN if self._colMajor else SW_STR_C
