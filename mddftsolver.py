@@ -98,9 +98,13 @@ class MddftSolver(SWSolver):
         print('    name := "' + nameroot + '",', file = script_file)
         # -1 is inverse for Numpy and forward (1) for Spiral
         if self._colMajor:
-            print("    TFCall(TRC(TColMajor(MDDFT(ns, " + str(self._problem.direction()) + "))), rec(fname := name, params := []))", file = script_file)
+            print("    TFCallF(TRC(MDDFT(ns, " + str(self._problem.direction()) + ")),", file = script_file)
+            print("        rec(fname := name,", file = script_file)
+            print("            params := [],", file = script_file)
+            print("            Xtype := TArrayNDF(TComplex, ns),", file = script_file)
+            print("            Ytype := TArrayNDF(TComplex, ns)))", file = script_file)
         else:
-            print("    TFCall(TRC(MDDFT(ns, " + str(self._problem.direction()) + ")), rec(fname := name, params := []))", file = script_file)
+            print("    TFCall(MDDFT(ns, " + str(self._problem.direction()) + "), rec(fname := name, params := []))", file = script_file)
         print(");", file = script_file)        
 
         print('', file = script_file)
