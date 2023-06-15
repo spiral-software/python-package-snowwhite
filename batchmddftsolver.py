@@ -39,7 +39,9 @@ class BatchMddftSolver(SWSolver):
             typ = 'c'
         ns = 'x'.join([str(n) for n in problem.dimensions()])
         direc = '_fwd_' if problem.direction() == SW_FORWARD else '_inv_'
-        namebase = typ + 'batchmddft' + direc + ns + 'x' + b
+        namebase = typ + 'batchmddft' + direc + ns + '_' + b
+            
+        opts[SW_OPT_METADATA] = True
         
         super(BatchMddftSolver, self).__init__(problem, namebase, opts)
 
@@ -52,11 +54,10 @@ class BatchMddftSolver(SWSolver):
         
         xp = get_array_module(src)
         
-        out = xp.empty(dimsTuple).astype(complex)
-        
-        for i in range(b):
-            dft = xp.fft.fftn(src[i,:,:,:]) 
-            out[i,:,:,:] = dft 
+        if self._problem.direction() == SW_FORWARD:
+            out = xp.fft.fftn(src, axes=(1,2,3))
+        else:
+            out = xp.fft.ifftn(src, axes=(1,2,3))
         
         return out
     
@@ -65,8 +66,13 @@ class BatchMddftSolver(SWSolver):
         dims = self._problem.dimensions()
         b = self._problem.szBatch()
         dimsTuple = tuple([b]) + tuple(dims)
+        
+        if self._opts.get(SW_OPT_REALCTYPE) == "float":
+            cxtype = np.csingle
+        else:
+            cxtype = np.cdouble
                
-        src = np.ones(dimsTuple, complex)
+        src = np.ones(dimsTuple, cxtype)
         for  k in range (np.size(src)):
             vr = np.random.random()
             vi = np.random.random()
@@ -88,9 +94,13 @@ class BatchMddftSolver(SWSolver):
             dims = self._problem.dimensions()
             b = self._problem.szBatch()
             dimsTuple = tuple([b]) + tuple(dims)
-            dst = xp.zeros(dimsTuple, dtype=np.complex128)
+            dst = xp.zeros(dimsTuple, src.dtype)
         
         self._func(dst, src)
+        if self._problem.direction() == SW_INVERSE:
+            xp = get_array_module(dst)
+            scale = xp.size(dst) / self._problem.szBatch()
+            xp.divide(dst, scale, out=dst)
         return dst
 
     def _writeScript(self, script_file):
@@ -126,7 +136,8 @@ class BatchMddftSolver(SWSolver):
         print('opts := conf.getOpts(t);', file = script_file)
         if self._genCuda or self._genHIP:
             print('opts.wrapCFuncs := true;', file = script_file)
-
+        if self._opts.get(SW_OPT_REALCTYPE) == "float":
+            print('opts.TRealCtype := "float";', file = script_file)    
         if self._printRuleTree:
             print("opts.printRuleTree := true;", file = script_file)
         print('', file = script_file)  
@@ -135,5 +146,12 @@ class BatchMddftSolver(SWSolver):
         print('c := opts.fftxGen(tt);', file = script_file)
         print('PrintTo("' + filename + filetype + '", opts.prettyPrint(c));', file = script_file)
         print('', file = script_file)
+        
+    def _setFunctionMetadata(self, obj):
+        obj[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_BATMDDFT
+        obj[SW_KEY_BATCHSIZE] = self._problem.szBatch()
+        
+
+
         
     

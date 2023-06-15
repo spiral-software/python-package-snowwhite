@@ -1,17 +1,17 @@
 #! python
 
 """
-usage: run-mdrconv.py N [ d|s [ GPU|CPU ]]
-  N = cube size, N >= 4
+usage: run-mdrfsconv.py N [ d|s [ GPU|CPU ]]
+  N = cube size, N >= 16
   d  = double, s = single precision   (default: double precision)
                                     
   (GPU is default target unless none exists or no CuPy)                     
                                     
-Three-dimensional real cyclic convolution
+Three-dimensional real free-space convolution
 """
 
 import sys
-from snowwhite.mdrconvsolver import *
+from snowwhite.mdrfsconvsolver import *
 import numpy as np
 try:
     import cupy as cp
@@ -29,7 +29,7 @@ try:
 except:
     usage()
     
-if N < 4:
+if N < 16:
     usage()
 
 c_type = 'double'
@@ -59,8 +59,8 @@ xp = np
 if forGPU:
     xp = cp
 
-p1 = MdrconvProblem(N)
-s1 = MdrconvSolver(p1, opts)
+p1 = MdrfsconvProblem(N)
+s1 = MdrfsconvSolver(p1, opts)
 
 (testIn, symbol) = s1.buildTestInput()
 

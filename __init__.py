@@ -9,7 +9,7 @@ try:
 except ModuleNotFoundError:
     _cupy = None
 
-__version__ = '1.0.0a2'
+__version__ = '1.0.1'
     
 # internal names
 
@@ -17,9 +17,10 @@ SW_LIBSDIR  = '.libs'
 
 # environment varibles
 
-SW_KEEPTEMP     = 'SW_KEEPTEMP'
-SW_LIBRARY_PATH = 'SW_LIBRARY_PATH'
-SW_WORKDIR      = 'SW_WORKDIR'
+SW_KEEPTEMP      = 'SW_KEEPTEMP'
+SW_LIBRARY_PATH  = 'SW_LIBRARY_PATH'
+SW_PRINTRULETREE = 'SW_PRINTRULETREE'
+SW_WORKDIR       = 'SW_WORKDIR'
 
 # options
 
@@ -55,12 +56,19 @@ SW_STR_SINGLE       = 'Single'
 SW_STR_FORWARD      = 'Forward'
 SW_STR_INVERSE      = 'Inverse'
 
+SW_STR_BLOCK        = 'Block'
+SW_STR_UNIT         = 'Unit'
+
+SW_TRANSFORM_BATDFT     = 'BATDFT'
+SW_TRANSFORM_BATMDDFT   = 'BATMDDFT'
 SW_TRANSFORM_DFT        = 'DFT'
 SW_TRANSFORM_MDDFT      = 'MDDFT'
 SW_TRANSFORM_MDRCONV    = 'MDRCONV'
+SW_TRANSFORM_MDRFSCONV  = 'MDRFSCONV'
 SW_TRANSFORM_MDPRDFT    = 'MDPRDFT'
 SW_TRANSFORM_UNKNOWN    = 'UNKNOWN'
 
+SW_KEY_BATCHSIZE        = 'BatchSize'
 SW_KEY_DESTROY          = 'Destroy'
 SW_KEY_DIMENSIONS       = 'Dimensions'
 SW_KEY_DIRECTION        = 'Direction'
@@ -72,10 +80,12 @@ SW_KEY_METADATA         = 'Metadata'
 SW_KEY_NAMES            = 'Names'
 SW_KEY_PLATFORM         = 'Platform'
 SW_KEY_PRECISION        = 'Precision'
+SW_KEY_READSTRIDE       = 'ReadStride'
 SW_KEY_SPIRALBUILDINFO  = 'SpiralBuildInfo'
 SW_KEY_TRANSFORMS       = 'Transforms'
 SW_KEY_TRANSFORMTYPE    = 'TransformType'
 SW_KEY_TRANSFORMTYPES   = 'TransformTypes'
+SW_KEY_WRITESTRIDE      = 'WriteStride'
 
 if sys.platform == 'win32':
     SW_SHLIB_EXT = '.dll'
