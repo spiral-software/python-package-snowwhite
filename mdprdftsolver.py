@@ -26,14 +26,7 @@ class MdprdftProblem(SWProblem):
         """Setup problem specifics for MDPRDFT solver."""
         
         super(MdprdftProblem, self).__init__(ns, k)
-        # last dimension of complex component is smaller
-        cxns = ns.copy()
-        z = cxns.pop()
-        cxns.append(z // 2 + 1)
-        self._cxns = cxns
-
-    def dimensionsCX(self):
-        return self._cxns
+        
         
 
 class MdprdftSolver(SWSolver):
@@ -57,21 +50,52 @@ class MdprdftSolver(SWSolver):
         
         if opts.get(SW_OPT_COLMAJOR, False):
             namebase = namebase + '_F'
-            
+        
+        # dimensions of complex array
+        cxns = problem.dimensions().copy()
+        
+        if opts.get(SW_OPT_COLMAJOR, False):
+            # for Fortran order, first dimension is smaller
+            cxns = cxns[::-1]
+            z = cxns.pop()
+            cxns.append(z // 2 + 1)
+            cxns = cxns[::-1]
+        else:
+            # for C order, last dimension is smaller
+            z = cxns.pop()
+            cxns.append(z // 2 + 1)
+        self._cxns = cxns
+        
         opts[SW_OPT_METADATA] = True
                     
         super(MdprdftSolver, self).__init__(problem, namebase, opts)
+        
+    def dimensionsCX(self):
+        return self._cxns
 
     def runDef(self, src):
         """Solve using internal Python definition."""
         
         xp = get_array_module(src)
+        
+        axes = np.arange(len(self._problem.dimensions()))
+        if self._colMajor:
+            axes = np.flip(axes)
 
         if self._problem.direction() == SW_FORWARD:
-            dst = xp.fft.rfftn ( src )
+            dst = xp.fft.rfftn(src, axes=axes)
         else:
-            dst = xp.fft.irfftn ( src, tuple(self._problem.dimensions()) )
+            if self._colMajor:
+                dst = xp.fft.irfftn(src, tuple(self._problem.dimensions())[::-1], axes=axes)
+            else:
+                dst = xp.fft.irfftn(src, tuple(self._problem.dimensions()), axes=axes)
 
+        # make sure dst array is correct order
+        if self._colMajor:
+            dst = xp.asfortranarray(dst)
+        else:
+            dst = xp.asarray(dst, order='C')
+        
         return dst
         
     def _trace(self):
@@ -83,7 +107,7 @@ class MdprdftSolver(SWSolver):
         if type(dst) == type(None):
             xp = get_array_module(src)
             if self._problem.direction() == SW_FORWARD:
-                nt = tuple(self._problem.dimensionsCX())
+                nt = tuple(self.dimensionsCX())
                 rtype = self._cxtype
             else:
                 nt = tuple(self._problem.dimensions())
@@ -124,7 +148,18 @@ class MdprdftSolver(SWSolver):
         print('    name := "' + nameroot + '",', file = script_file)
         # -1 is inverse for Numpy and forward (1) for Spiral
         if self._colMajor:
-            print("    TFCall(TColMajor(" + xform + "(ns, " + str(self._problem.direction()) + ")), rec(fname := name, params := []))", file = script_file)
+            if self._problem.direction() == SW_INVERSE:
+                xtype = 'Xtype := TArrayNDF_ConjEven(TComplex, ns)'
+                ytype = 'Ytype := TArrayNDF(TReal, ns)'
+            else:
+                xtype = 'Xtype := TArrayNDF(TReal, ns)'
+                ytype = 'Ytype := TArrayNDF_ConjEven(TComplex, ns)'
+        
+            print('  TFCallF(' + xform + '(ns, ' + str(self._problem.direction()) + '),', file = script_file)
+            print('    rec(fname := name,', file = script_file)
+            print('        params := [],', file = script_file)
+            print('        ' + xtype + ',', file = script_file)
+            print('        ' + ytype + '))', file = script_file)
         else:
             print("    TFCall(" + xform + "(ns, " + str(self._problem.direction()) + "), rec(fname := name, params := []))", file = script_file)
         print(");", file = script_file)        
@@ -147,6 +182,7 @@ class MdprdftSolver(SWSolver):
     
     def _setFunctionMetadata(self, obj):
         obj[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_MDPRDFT
+        obj[SW_KEY_ORDER] = SW_STR_FORTRAN if self._colMajor else SW_STR_C
      
         
     

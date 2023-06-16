@@ -59,6 +59,10 @@ SW_STR_INVERSE      = 'Inverse'
 SW_STR_BLOCK        = 'Block'
 SW_STR_UNIT         = 'Unit'
 
+SW_STR_C            = 'C'
+SW_STR_FORTRAN      = 'Fortran'
+
+
 SW_TRANSFORM_BATDFT     = 'BATDFT'
 SW_TRANSFORM_BATMDDFT   = 'BATMDDFT'
 SW_TRANSFORM_DFT        = 'DFT'
@@ -78,6 +82,7 @@ SW_KEY_FUNCTIONS        = 'Functions'
 SW_KEY_INIT             = 'Init'
 SW_KEY_METADATA         = 'Metadata'
 SW_KEY_NAMES            = 'Names'
+SW_KEY_ORDER            = 'Order'
 SW_KEY_PLATFORM         = 'Platform'
 SW_KEY_PRECISION        = 'Precision'
 SW_KEY_READSTRIDE       = 'ReadStride'
