@@ -158,7 +158,7 @@ class DftSolver(SWSolver):
         bdims = self._problem._batchDims
         if np.prod(bdims) > 1:
             obj[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_BATDFT
-            obj[SW_KEY_BATCHSIZE] = bdims
+            obj[SW_KEY_BATCHSIZE] = int(np.prod(bdims))
             obj[SW_KEY_READSTRIDE]  = SW_STR_UNIT if self._problem._readStride  == 1 else SW_STR_BLOCK
             obj[SW_KEY_WRITESTRIDE] = SW_STR_UNIT if self._problem._writeStride == 1 else SW_STR_BLOCK
         else:

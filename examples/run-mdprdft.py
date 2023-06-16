@@ -1,10 +1,12 @@
 #! python
 
 """
-usage: run-mdprdft.py sz bat [ F|I [ d|s [ GPU|CPU ]]]
-  sz is N or N1,N2,N3, all N >= 2     (dimensions of full real array)
+usage: run-mdprdft.py sz [ F|I [ d|s [ GPU|CPU [Fortran]]]
+  sz is N or N1,N2,.. all N >= 2, single N implies 3D cube
   F  = Forward, I = Inverse           (default: Forward)
   d  = double, s = single precision   (default: double precision)
+  GPU is default target unless none exists or no CuPy
+  C ordering is default unless Fortran specified
                                     
   (GPU is default target unless none exists or no CuPy)
   
@@ -56,6 +58,10 @@ if len ( sys.argv ) > 4:
     plat_arg = sys.argv[4]
 else:
     plat_arg = 'GPU'
+    
+order = 'C'
+if (len ( sys.argv ) > 5) and (sys.argv[5].lower() == 'fortran'):
+    order = 'F'
 
 if plat_arg == 'GPU' and (cp != None):
     platform = SW_HIP if sw.has_ROCm() else SW_CUDA
@@ -67,22 +73,22 @@ else:
     xp = np
 
 opts = { SW_OPT_REALCTYPE : c_type, SW_OPT_PLATFORM : platform }
+if order == 'F':
+    opts[SW_OPT_COLMAJOR] = True
    
 p1 = MdprdftProblem(dims, k)
 s1 = MdprdftSolver(p1, opts)
 
 if k == SW_FORWARD:
     # build full-size array of real
-    src = np.ones(dims, ftype)
+    src = np.ones(dims, ftype, order)
     for  k in range (np.size(src)):
         vr = np.random.random()
         src.itemset(k,vr)
 else:
     # build half-size array of complex
-    dims2 = dims.copy()
-    z = dims2.pop()
-    dims2.append(z // 2 + 1)
-    src = np.ones(dims2, cxtype)
+    dims2 = s1.dimensionsCX()
+    src = np.ones(dims2, cxtype, order)
     for  k in range (np.size(src)):
         vr = np.random.random()
         vi = np.random.random()
