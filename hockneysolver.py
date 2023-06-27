@@ -140,8 +140,7 @@ class HockneySolver(SWSolver):
             print("conf := FFTXGlobals.mdRConv();", file = script_file)
             print("opts := FFTXGlobals.getOpts(conf);", file = script_file)
             print("opts.preProcess := (self, t) >> t;", file = script_file)
-        if self._printRuleTree:
-            print("opts.printRuleTree := true;", file = script_file)
+        self._writePrintOpts(script_file)
         print("", file = script_file)
         print('t := let(symvar := var("sym", TPtr(TReal)),', file = script_file)
         print("    TFCall(", file = script_file)

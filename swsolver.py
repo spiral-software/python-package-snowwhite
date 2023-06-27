@@ -52,7 +52,9 @@ class SWSolver:
         self._genCuda = (self._opts.get(SW_OPT_PLATFORM, SW_CPU) == SW_CUDA)
         self._keeptemp = self._opts.get(SW_OPT_KEEPTEMP, os.getenv(SW_KEEPTEMP) != None)
         self._withMPI = self._opts.get(SW_OPT_MPI, False)
+        self._printICode = self._opts.get(SW_OPT_PRINTICODE, os.getenv(SW_PRINTICODE) != None)
         self._printRuleTree = self._opts.get(SW_OPT_PRINTRULETREE, os.getenv(SW_PRINTRULETREE) != None)
+        self._printSums = self._opts.get(SW_OPT_PRINTSUMS, os.getenv(SW_PRINTSUMS) != None)
         self._tracingOn = False
         self._callGraph = []
         self._SharedLibAccess = None
@@ -132,6 +134,14 @@ class SWSolver:
         self._writeScript(script_file)
         script_file.close()
         
+    def _writePrintOpts(self, script_file):
+        if self._printRuleTree:
+            print("opts.printRuleTree := true;", file = script_file)
+        if self._printSums:
+            print("opts.printSums := true;", file = script_file)
+        if self._printICode:
+            print("opts.printICode := true;", file = script_file)
+    
     def _setFunctionMetadata(self, obj):
         pass
         

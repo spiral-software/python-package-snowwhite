@@ -19,7 +19,9 @@ SW_LIBSDIR  = '.libs'
 
 SW_KEEPTEMP      = 'SW_KEEPTEMP'
 SW_LIBRARY_PATH  = 'SW_LIBRARY_PATH'
+SW_PRINTICODE    = 'SW_PRINTICODE'
 SW_PRINTRULETREE = 'SW_PRINTRULETREE'
+SW_PRINTSUMS     = 'SW_PRINTSUMS'
 SW_WORKDIR       = 'SW_WORKDIR'
 
 # options
@@ -29,7 +31,9 @@ SW_OPT_KEEPTEMP         = 'keeptemp'
 SW_OPT_METADATA         = 'metadata'
 SW_OPT_MPI              = 'mpi'
 SW_OPT_PLATFORM         = 'platform'
+SW_OPT_PRINTICODE       = 'printicode'
 SW_OPT_PRINTRULETREE    = 'printruletree'
+SW_OPT_PRINTSUMS        = 'printsums'
 SW_OPT_REALCTYPE        = 'realctype'
 
 # transform direction, 'k'

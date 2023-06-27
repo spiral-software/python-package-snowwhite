@@ -171,8 +171,7 @@ class MdprdftSolver(SWSolver):
         if self._opts.get(SW_OPT_REALCTYPE) == "float":
             print('opts.TRealCtype := "float";', file = script_file)
 
-        if self._printRuleTree:
-            print("opts.printRuleTree := true;", file = script_file)
+        self._writePrintOpts(script_file)
 
         print("tt := opts.tagIt(t);", file = script_file)
         print("", file = script_file)
