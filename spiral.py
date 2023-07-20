@@ -1,6 +1,7 @@
 
 import sys
 import subprocess
+import os
 
 
 SPIRAL_KEY_CMAKEVERSION     =  'CMakeVersion'
@@ -41,10 +42,36 @@ def spiralBuildInfo():
     return bdd
 
 
+def isSpiralInPath(progname):
+    "Determine if the Spiral executable is in the user's PATH"
+    try:
+        ##  Use the 'which' command (Unix/Linux) or the 'where' command (Windows)
+        if sys.platform =='win32':              ##  Windows
+            subprocess.run ( ['where', progname], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE )
+        else:                                   ##  Unix/Linux/Mac
+            subprocess.run ( ['which', progname], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE )
+
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
+
 def callSpiralWithFile(filename):
     try:
+        if isSpiralInPath(SPIRAL_EXE):
+            runprog = SPIRAL_EXE
+        else:
+            ##  Try setting full path to Spiral exe as: $SPIRAL_HOME/bin/SPIRAL_EXE
+            sh_value = os.environ.get ( 'SPIRAL_HOME' )
+            if sh_value is not None:
+                runprog = os.path.join ( sh_value, 'bin', SPIRAL_EXE )
+                ##  print ( f'{SPIRAL_EXE} is NOT in the user\'s path, try running program {runprog}', flush=True )
+            else:
+                print ( f'Can\'t run {SPIRAL_EXE}, not found in PATH and SPIRAL_HOME is undefined', flush=True )
+                return SPIRAL_RET_ERR
+
         with open(filename, 'r') as f:
-            runResult = subprocess.run(SPIRAL_EXE, stdin=f, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            runResult = subprocess.run(runprog, stdin=f, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             if runResult.returncode == 0:
                 return SPIRAL_RET_OK
             else:
