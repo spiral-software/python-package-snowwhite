@@ -1,6 +1,12 @@
 Python Package for SnowWhite
 ============================
 
+---
+
+**NOTE:** This GitHub repository is depricated.  The SnowWhite package was renamed to SpiralPy and restructured in preparation for release on PyPi.  The renamed/supported version is available at [Python-Package-SpiralPy](https://www.github.com/spiral-software/python-package-spiralpy).
+
+---
+
 This is the Python front end for the [SPIRAL project's](http://www.spiral.net) SnowWhite system, which compiles high-level specifications of numerical computations into hardware-specific optimized code.  It supports a variety of CPU's as well as Nvidia and AMD GPU's on systems running Linux, Windows, or MacOS.
 
 SnowWhite originated under the [DARPA PAPPA](https://www.darpa.mil/program/performant-automation-of-parallel-program-assembly) (Performant Automation of Parallel Program Assembly) program.  The program focused on ways reduce the complexity of building software that takes advantage of the massive parallelism of advanced high-preformance computing systems.  Further work continued as part of [FFTX](http://www.spiral.net/software/fftx.html) under the [Exascale Computing Project](https://www.exascaleproject.org/).
