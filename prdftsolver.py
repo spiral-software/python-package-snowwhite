@@ -10,40 +10,44 @@ import ctypes
 import sys
 import random
 
-class DftProblem(SWProblem):
-    """Define 1D DFT problem."""
+class PrdftProblem(SWProblem):
+    """Define 1D PRDFT problem."""
 
     def __init__(self, n, k=SW_FORWARD, batchDims=[1,1], readStride=1, writeStride=1):
-        """Setup problem specifics for 1D DFT solver.
+        """Setup problem specifics for 1D PRDFT solver.
         
         Arguments:
         k           -- direction
-        n           -- dimension of 1D DFT
+        n           -- dimension of 1D PRDFT
         batchDims   -- dimensions of batch
         readStride  -- unit (1) or block (!=1)
         writeStride -- unit (1) or block (!=1)
         """
-        super(DftProblem, self).__init__([n], k)
+        super(PrdftProblem, self).__init__([n], k)
         self._batchDims = batchDims
         self._readStride = readStride
         self._writeStride = writeStride
 
 
-class DftSolver(SWSolver):
-    def __init__(self, problem: DftProblem, opts = {}):
-        if not isinstance(problem, DftProblem):
-            raise TypeError("problem must be a DftProblem")
+class PrdftSolver(SWSolver):
+    def __init__(self, problem: PrdftProblem, opts = {}):
+        if not isinstance(problem, PrdftProblem):
+            raise TypeError("problem must be a PrdftProblem")
         
-        typ = 'z'
+        typ = 'd'
+        self._ftype = np.double
+        self._cxtype = np.cdouble
         if opts.get(SW_OPT_REALCTYPE, 0) == 'float':
-            typ = 'c'
+            typ = 'f'
+            self._ftype = np.single
+            self._cxtype = np.csingle
         n = str(problem.dimN())
         c = '_'
         namebase = ''
         if problem.direction() == SW_FORWARD:
-            namebase = typ + 'dft_fwd' + c + n
+            namebase = typ + 'prdft' + c + n
         else:
-            namebase = typ + 'dft_inv' + c + n
+            namebase = typ + 'ipidft' + c + n
             
         dims = problem._batchDims
         bat = np.prod(dims)
@@ -54,7 +58,7 @@ class DftSolver(SWSolver):
             
         opts[SW_OPT_METADATA] = True
             
-        super(DftSolver, self).__init__(problem, namebase, opts)
+        super(PrdftSolver, self).__init__(problem, namebase, opts)
 
     def runDef(self, src):
         """Solve using internal Python definition."""
@@ -64,9 +68,9 @@ class DftSolver(SWSolver):
         ax = -1 if self._problem._readStride == 1 else 0
         
         if self._problem.direction() == SW_FORWARD:
-            dst = xp.fft.fft(src, axis=ax)
+            dst = xp.fft.rfft(src, axis=ax)
         else:
-            dst = xp.fft.ifft(src, axis=ax)
+            dst = xp.fft.irfft(src, n=self._problem.dimN(), axis=ax)
             
         if self._problem._writeStride != self._problem._readStride:
             if self._problem._writeStride != 1:
@@ -85,17 +89,26 @@ class DftSolver(SWSolver):
         
     def _trace(self):
         pass
+        
+    def _new_dst(self, src):
+        xp = get_array_module(src)
+        Nx = self._problem.dimN()
+        typ = self._ftype
+        if self._problem.direction() == SW_FORWARD:
+            Nx = (Nx // 2) + 1
+            typ = self._cxtype
+        bdims = self._problem._batchDims
+        if self._problem._writeStride == 1:
+            dims = bdims + [Nx]
+        else:
+            dims = [Nx] + bdims
+        dst = xp.zeros(dims, typ)
+        return dst
 
     def solve(self, src, dst=None):
         """Call SPIRAL-generated function."""
         if type(dst) == type(None):
-            xp = get_array_module(src)
-            if self._problem._writeStride == self._problem._readStride:
-                dst = xp.zeros_like(src)
-            else:
-                # reverse dims
-                dims = src.shape[::-1]
-                dst = xp.zeros(dims,src.dtype)
+            dst = self._new_dst(src)
         self._func(dst, src)
         return dst
 
@@ -110,15 +123,20 @@ class DftSolver(SWSolver):
         
         print("Load(fftx);", file = script_file)
         print("ImportAll(fftx);", file = script_file)
+        print("Import(realdft);", file = script_file)
 
         print('', file = script_file)
         
-        dft_def = 'DFT(N, ' + str(self._problem.direction()) + ')'
-        if self._problem.direction() == SW_INVERSE:
-            dft_def = 'Scale(1/N, ' + dft_def + ')'
+        if self._problem.direction() == SW_FORWARD:
+            xform = 'PRDFT'
+        else:
+            xform = 'IPRDFT'
+        
+        dft_def = xform + '(N, -1)'
+        #if self._problem.direction() == SW_INVERSE:
+        #    dft_def = 'Scale(1/N, ' + dft_def + ')'
         
         bdims = self._problem._batchDims
-        #bdims_str = '[Ind({0}), Ind({1}), Ind(1)]'.format(bdims[0],bdims[1])
         bdims_str = str(np.prod(bdims))
         
         W = 'APar' if self._problem._writeStride == 1 else 'AVec'
@@ -156,12 +174,12 @@ class DftSolver(SWSolver):
     def _setFunctionMetadata(self, obj):
         bdims = self._problem._batchDims
         if np.prod(bdims) > 1:
-            obj[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_BATDFT
+            obj[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_BATPRDFT
             obj[SW_KEY_BATCHSIZE] = int(np.prod(bdims))
             obj[SW_KEY_READSTRIDE]  = SW_STR_UNIT if self._problem._readStride  == 1 else SW_STR_BLOCK
             obj[SW_KEY_WRITESTRIDE] = SW_STR_UNIT if self._problem._writeStride == 1 else SW_STR_BLOCK
         else:
-            obj[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_DFT
+            obj[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_PRDFT
 
 
 

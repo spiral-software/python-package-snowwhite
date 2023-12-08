@@ -39,7 +39,9 @@ class BatchMddftSolver(SWSolver):
             typ = 'c'
         ns = 'x'.join([str(n) for n in problem.dimensions()])
         direc = '_fwd_' if problem.direction() == SW_FORWARD else '_inv_'
-        namebase = typ + 'batchmddft' + direc + ns + 'x' + b
+        namebase = typ + 'batchmddft' + direc + ns + '_' + b
+            
+        opts[SW_OPT_METADATA] = True
         
         super(BatchMddftSolver, self).__init__(problem, namebase, opts)
 
@@ -52,14 +54,10 @@ class BatchMddftSolver(SWSolver):
         
         xp = get_array_module(src)
         
-        out = xp.empty(dimsTuple).astype(complex)
-        
-        for i in range(b):
-            if self._problem.direction() == SW_FORWARD:
-                dft = xp.fft.fftn(src[i,:,:,:])
-            else:
-                dft = xp.fft.ifftn(src[i,:,:,:])
-            out[i,:,:,:] = dft 
+        if self._problem.direction() == SW_FORWARD:
+            out = xp.fft.fftn(src, axes=(1,2,3))
+        else:
+            out = xp.fft.ifftn(src, axes=(1,2,3))
         
         return out
     
@@ -111,7 +109,9 @@ class BatchMddftSolver(SWSolver):
         filetype = '.c'
         if self._genCuda:
             filetype = '.cu'
-                
+        if self._genHIP:
+            filetype = '.cpp'
+
         print('Load(fftx);', file = script_file)
         print('ImportAll(fftx);', file = script_file) 
         print('', file = script_file)
@@ -128,20 +128,29 @@ class BatchMddftSolver(SWSolver):
         
         if self._genCuda:
             print('conf := LocalConfig.fftx.confGPU();', file = script_file)
+        elif self._genHIP:
+            print ( 'conf := FFTXGlobals.defaultHIPConf();', file = script_file )
         else:
             print('conf := LocalConfig.fftx.defaultConf();', file = script_file)
+
         print('opts := conf.getOpts(t);', file = script_file)
-        if self._genCuda:
+        if self._genCuda or self._genHIP:
             print('opts.wrapCFuncs := true;', file = script_file)
         if self._opts.get(SW_OPT_REALCTYPE) == "float":
-            print('opts.TRealCtype := "float";', file = script_file)    
-        if self._printRuleTree:
-            print("opts.printRuleTree := true;", file = script_file)
+            print('opts.TRealCtype := "float";', file = script_file)
+        self._writePrintOpts(script_file)
         print('', file = script_file)  
 
         print('tt := opts.tagIt(t);', file = script_file)
         print('c := opts.fftxGen(tt);', file = script_file)
         print('PrintTo("' + filename + filetype + '", opts.prettyPrint(c));', file = script_file)
         print('', file = script_file)
+        
+    def _setFunctionMetadata(self, obj):
+        obj[SW_KEY_TRANSFORMTYPE] = SW_TRANSFORM_BATMDDFT
+        obj[SW_KEY_BATCHSIZE] = self._problem.szBatch()
+        
+
+
         
     

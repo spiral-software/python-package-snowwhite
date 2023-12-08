@@ -17,9 +17,12 @@ SW_LIBSDIR  = '.libs'
 
 # environment varibles
 
-SW_KEEPTEMP     = 'SW_KEEPTEMP'
-SW_LIBRARY_PATH = 'SW_LIBRARY_PATH'
-SW_WORKDIR      = 'SW_WORKDIR'
+SW_KEEPTEMP      = 'SW_KEEPTEMP'
+SW_LIBRARY_PATH  = 'SW_LIBRARY_PATH'
+SW_PRINTICODE    = 'SW_PRINTICODE'
+SW_PRINTRULETREE = 'SW_PRINTRULETREE'
+SW_PRINTSUMS     = 'SW_PRINTSUMS'
+SW_WORKDIR       = 'SW_WORKDIR'
 
 # options
 
@@ -28,7 +31,9 @@ SW_OPT_KEEPTEMP         = 'keeptemp'
 SW_OPT_METADATA         = 'metadata'
 SW_OPT_MPI              = 'mpi'
 SW_OPT_PLATFORM         = 'platform'
+SW_OPT_PRINTICODE       = 'printicode'
 SW_OPT_PRINTRULETREE    = 'printruletree'
+SW_OPT_PRINTSUMS        = 'printsums'
 SW_OPT_REALCTYPE        = 'realctype'
 
 # transform direction, 'k'
@@ -55,6 +60,16 @@ SW_STR_SINGLE       = 'Single'
 SW_STR_FORWARD      = 'Forward'
 SW_STR_INVERSE      = 'Inverse'
 
+SW_STR_BLOCK        = 'Block'
+SW_STR_UNIT         = 'Unit'
+
+SW_STR_C            = 'C'
+SW_STR_FORTRAN      = 'Fortran'
+
+
+SW_TRANSFORM_BATDFT     = 'BATDFT'
+SW_TRANSFORM_BATMDDFT   = 'BATMDDFT'
+SW_TRANSFORM_BATPRDFT   = 'BATPRDFT'
 SW_TRANSFORM_DFT        = 'DFT'
 SW_TRANSFORM_MDDFT      = 'MDDFT'
 SW_TRANSFORM_MDRCONV    = 'MDRCONV'
@@ -62,6 +77,7 @@ SW_TRANSFORM_MDRFSCONV  = 'MDRFSCONV'
 SW_TRANSFORM_MDPRDFT    = 'MDPRDFT'
 SW_TRANSFORM_UNKNOWN    = 'UNKNOWN'
 
+SW_KEY_BATCHSIZE        = 'BatchSize'
 SW_KEY_DESTROY          = 'Destroy'
 SW_KEY_DIMENSIONS       = 'Dimensions'
 SW_KEY_DIRECTION        = 'Direction'
@@ -71,12 +87,15 @@ SW_KEY_FUNCTIONS        = 'Functions'
 SW_KEY_INIT             = 'Init'
 SW_KEY_METADATA         = 'Metadata'
 SW_KEY_NAMES            = 'Names'
+SW_KEY_ORDER            = 'Order'
 SW_KEY_PLATFORM         = 'Platform'
 SW_KEY_PRECISION        = 'Precision'
+SW_KEY_READSTRIDE       = 'ReadStride'
 SW_KEY_SPIRALBUILDINFO  = 'SpiralBuildInfo'
 SW_KEY_TRANSFORMS       = 'Transforms'
 SW_KEY_TRANSFORMTYPE    = 'TransformType'
 SW_KEY_TRANSFORMTYPES   = 'TransformTypes'
+SW_KEY_WRITESTRIDE      = 'WriteStride'
 
 if sys.platform == 'win32':
     SW_SHLIB_EXT = '.dll'

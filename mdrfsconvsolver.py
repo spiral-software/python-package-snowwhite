@@ -32,9 +32,11 @@ class MdrfsconvSolver(SWSolver):
         
         typ = 'd'
         self._ftype = np.double
+        self._cxtype = np.cdouble
         if opts.get(SW_OPT_REALCTYPE, 0) == 'float':
             typ = 'f'
             self._ftype = np.single
+            self._cxtype = np.csingle
         
         n = str(problem.dimN())
         ns = 'x'.join([str(n) for n in problem.dimensions()])
@@ -150,8 +152,7 @@ class MdrfsconvSolver(SWSolver):
         if self._opts.get(SW_OPT_REALCTYPE) == "float":
             print('opts.TRealCtype := "float";', file = script_file)
 
-        if self._printRuleTree:
-            print("opts.printRuleTree := true;", file = script_file)
+        self._writePrintOpts(script_file)
 
         print("tt := opts.tagIt(t);", file = script_file)
         print("", file = script_file)
@@ -169,6 +170,10 @@ class MdrfsconvSolver(SWSolver):
         
         symIn = xp.random.rand(n*2,n*2,n*2).astype(self._ftype)
         testSym = xp.fft.rfftn(symIn)
+        
+        #NumPy returns Fortran ordering from FFTs, and always double complex
+        if xp == np:
+            testSym = np.asanyarray(testSym, dtype=self._cxtype, order='C')        
         
         return (testSrc, testSym)
     

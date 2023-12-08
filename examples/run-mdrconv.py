@@ -2,7 +2,7 @@
 
 """
 usage: run-mdrconv.py N [ d|s [ GPU|CPU ]]
-  N = cube size, N >= 16
+  N = cube size, N >= 4
   d  = double, s = single precision   (default: double precision)
                                     
   (GPU is default target unless none exists or no CuPy)                     
@@ -29,7 +29,7 @@ try:
 except:
     usage()
     
-if N < 16:
+if N < 4:
     usage()
 
 c_type = 'double'
@@ -69,7 +69,7 @@ dstC = s1.solve(testIn, symbol)
 
 diff = xp.max(xp.absolute(dstC - dstP))
 
-print('Diff between Python/C transforms = ' + str(diff))
+print('Diff between ' + plat_arg + ' Python/C transforms = ' + str(diff))
 
 
 
